@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  lastName  String
+  phone     String   @unique
+  birthday  DateTime
+  additionalInfo String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  credits      UserCredit[]
+  bookings     Booking[]
+  transactions Transaction[]
+}
+
+
+model Package {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  classCount  Int
+  price       Float
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  transactions Transaction[]
+}
+
+model UserCredit {
+  id              String   @id @default(cuid())
+  userId          String
+  creditsRemaining Int
+  creditsTotal    Int
+  expiresAt       DateTime?
+  createdAt       DateTime @default(now())
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Class {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  startTime   DateTime
+  endTime     DateTime
+  capacity    Int
+  instructor  String?
+  createdAt   DateTime @default(now())
+  
+  bookings Booking[]
+}
+
+model Booking {
+  id        String   @id @default(cuid())
+  userId    String
+  classId   String
+  status    String   @default("confirmed")
+  createdAt DateTime @default(now())
+  
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  class Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, classId])
+}
+
+model Transaction {
+  id              String   @id @default(cuid())
+  userId          String
+  packageId       String
+  amount          Float
+  stripePaymentId String?
+  status          String
+  createdAt       DateTime @default(now())
+  
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  package Package @relation(fields: [packageId], references: [id])
+}
