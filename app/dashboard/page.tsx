@@ -98,7 +98,10 @@ export default function DashboardPage() {
         <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800 mb-6">
           <h2 className="text-2xl font-bold text-amber-400 mb-4">My Class Credits</h2>
           <p className="text-white text-lg">You have <span className="text-amber-400 font-bold">0</span> classes remaining</p>
-          <button className="mt-4 px-6 py-3 bg-amber-400 hover:bg-amber-500 text-black font-semibold rounded-lg transition">
+          <button 
+            onClick={() => router.push('/packages')}
+            className="mt-4 px-6 py-3 bg-amber-400 hover:bg-amber-500 text-black font-semibold rounded-lg transition"
+          >
             Buy More Classes
           </button>
         </div>
