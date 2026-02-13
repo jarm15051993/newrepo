@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Signup error:', error)
     return NextResponse.json(
-      { error: 'server', message: 'Internal server error', _debug: { vercelEnv: process.env.VERCEL_ENV, nodeEnv: process.env.NODE_ENV, hasDbUrl: !!process.env.DATABASE_URL, hasStripeKey: !!process.env.STRIPE_SECRET_KEY, hasNextAuthSecret: !!process.env.NEXTAUTH_SECRET, allKeys: Object.keys(process.env).filter(k => !k.startsWith('npm_') && !k.startsWith('NODE_') && k !== 'PATH' && k !== 'HOME' && k !== 'PWD').slice(0, 30) } },
+      { error: 'server', message: 'Internal server error', _debug: { hasDbUrl: !!process.env.DATABASE_URL, errorMessage: error instanceof Error ? error.message : String(error), errorName: error instanceof Error ? error.constructor.name : 'unknown' } },
       { status: 500 }
     )
   }
