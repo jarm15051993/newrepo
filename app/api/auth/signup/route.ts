@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Signup error:', error)
     return NextResponse.json(
-      { error: 'server', message: 'Internal server error', _debug: { hasDbUrl: !!process.env.DATABASE_URL, hasDirectUrl: !!process.env.DIRECT_URL } },
+      { error: 'server', message: 'Internal server error', _debug: { hasDbUrl: !!process.env.DATABASE_URL, hasDirectUrl: !!process.env.DIRECT_URL, dbUrlValue: process.env.DATABASE_URL?.substring(0, 20), matchingKeys: Object.keys(process.env).filter(k => k.toLowerCase().includes('data') || k.toLowerCase().includes('postgres') || k.toLowerCase().includes('db_') || k.toLowerCase().includes('direct')) } },
       { status: 500 }
     )
   }
