@@ -33,9 +33,11 @@ export async function POST(request: NextRequest) {
     })
 
     if (existingPayment) {
-      return NextResponse.json({ 
+      const classCount = parseInt(session.metadata?.classes || '0')
+      return NextResponse.json({
         message: 'Payment already recorded',
-        payment: existingPayment 
+        payment: existingPayment,
+        creditsAdded: classCount
       })
     }
 

@@ -56,41 +56,41 @@ export default function PackagesPage() {
   }, [router])
 
   const handlePurchase = async (packageId: string) => {
-  setSelectedPackage(packageId)
-  
-  try {
-    // Create checkout session
-    const response = await fetch('/api/checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        packageId,
-        userId: user.id,
-        userEmail: user.email
+    setSelectedPackage(packageId)
+
+    try {
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          packageId,
+          userId: user.id,
+          userEmail: user.email
+        })
       })
-    })
 
-    const data = await response.json()
+      const data = await response.json()
 
-    if (!response.ok) {
-      throw new Error(data.error || 'Failed to create checkout session')
-    }
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create checkout session')
+      }
 
-    // Redirect to Stripe checkout
-    if (data.url) {
+      if (!data.url) {
+        throw new Error('No checkout URL returned')
+      }
+
       window.location.href = data.url
+    } catch (error: any) {
+      toast.error(error.message || 'Something went wrong. Please try again.', {
+        style: {
+          background: '#1a1a1a',
+          color: '#fbbf24',
+          border: '1px solid #ef4444',
+        },
+      })
+      setSelectedPackage(null)
     }
-  } catch (error: any) {
-    toast.error(error.message || 'Something went wrong', {
-      style: {
-        background: '#1a1a1a',
-        color: '#fbbf24',
-        border: '1px solid #ef4444',
-      },
-    })
-    setSelectedPackage(null)
   }
-}
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">

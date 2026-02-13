@@ -3,13 +3,19 @@ import { prisma } from '@/lib/prisma'
 
 export async function POST() {
   try {
-    // Check if classes already exist
-    const existingClasses = await prisma.class.count()
-    
+    // Check if upcoming classes already exist
+    const existingClasses = await prisma.class.count({
+      where: {
+        startTime: {
+          gte: new Date()
+        }
+      }
+    })
+
     if (existingClasses > 0) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         message: 'Classes already exist',
-        count: existingClasses 
+        count: existingClasses
       })
     }
 

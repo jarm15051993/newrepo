@@ -1,23 +1,24 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSearchParams } from 'next/navigation'
 
-export default function CheckoutSuccess() {
+function CheckoutSuccessContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const sessionId = searchParams.get('session_id')
-  const [verifying, setVerifying] = useState(true)
+  const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying')
   const [creditsAdded, setCreditsAdded] = useState(0)
+  const [countdown, setCountdown] = useState(3)
 
   useEffect(() => {
-    const verifyPayment = async () => {
-      if (!sessionId) {
-        router.push('/packages')
-        return
-      }
+    if (!sessionId) {
+      router.push('/packages')
+      return
+    }
 
+    const verifyPayment = async () => {
       try {
         const response = await fetch('/api/payment/verify', {
           method: 'POST',
@@ -29,26 +30,39 @@ export default function CheckoutSuccess() {
 
         if (response.ok) {
           setCreditsAdded(data.creditsAdded || 0)
-          setVerifying(false)
-          
-          // Redirect after 3 seconds
-          setTimeout(() => {
-            router.push('/dashboard')
-          }, 3000)
+          setStatus('success')
         } else {
           console.error('Payment verification failed:', data.error)
-          setVerifying(false)
+          setStatus('error')
         }
       } catch (error) {
         console.error('Error verifying payment:', error)
-        setVerifying(false)
+        setStatus('error')
       }
     }
 
     verifyPayment()
   }, [sessionId, router])
 
-  if (verifying) {
+  // Countdown + redirect once verified
+  useEffect(() => {
+    if (status !== 'success') return
+
+    const interval = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(interval)
+          router.push('/dashboard')
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [status, router])
+
+  if (status === 'verifying') {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
         <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800 text-center max-w-md">
@@ -60,19 +74,38 @@ export default function CheckoutSuccess() {
     )
   }
 
+  if (status === 'error') {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
+        <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800 text-center max-w-md">
+          <div className="text-4xl mb-4">⚠️</div>
+          <h1 className="text-2xl font-bold text-amber-400 mb-4">Verification Issue</h1>
+          <p className="text-gray-400 mb-6">
+            Your payment may have completed but we couldn't confirm it automatically. Your credits will appear in your dashboard shortly.
+          </p>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="px-6 py-3 bg-amber-400 hover:bg-amber-500 text-black font-semibold rounded-lg transition"
+          >
+            Go to Dashboard
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-4">
       <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800 text-center max-w-md">
         <div className="text-6xl mb-4">✓</div>
         <h1 className="text-3xl font-bold text-amber-400 mb-4">Payment Successful!</h1>
         <p className="text-gray-300 mb-2">
-          <span className="text-amber-400 font-bold">{creditsAdded}</span> {creditsAdded === 1 ? 'class credit has' : 'class credits have'} been added to your account.
+          <span className="text-amber-400 font-bold">{creditsAdded}</span>{' '}
+          {creditsAdded === 1 ? 'class credit has' : 'class credits have'} been added to your account.
         </p>
+        <p className="text-gray-400 text-sm mb-6">Your credits are valid for 6 months.</p>
         <p className="text-gray-400 text-sm mb-6">
-          Your credits are valid for 6 months.
-        </p>
-        <p className="text-gray-400 text-sm mb-6">
-          Redirecting to dashboard in 3 seconds...
+          Redirecting to dashboard in {countdown} second{countdown !== 1 ? 's' : ''}...
         </p>
         <button
           onClick={() => router.push('/dashboard')}
@@ -82,5 +115,22 @@ export default function CheckoutSuccess() {
         </button>
       </div>
     </div>
+  )
+}
+
+export default function CheckoutSuccess() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-black flex items-center justify-center p-4">
+          <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800 text-center max-w-md">
+            <div className="text-4xl mb-4">⏳</div>
+            <h1 className="text-2xl font-bold text-amber-400 mb-4">Loading...</h1>
+          </div>
+        </div>
+      }
+    >
+      <CheckoutSuccessContent />
+    </Suspense>
   )
 }

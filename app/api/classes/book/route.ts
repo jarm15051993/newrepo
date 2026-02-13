@@ -51,15 +51,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check class capacity
-    const bookingsCount = await prisma.booking.count({
-      where: {
-        classId,
-        status: 'confirmed'
-      }
+    // Fetch class to check capacity via bookedCount
+    const cls = await prisma.class.findUnique({
+      where: { id: classId },
+      select: { bookedCount: true, capacity: true, bookings: { select: { stretcherNumber: true }, where: { status: 'confirmed' } } }
     })
 
-    if (bookingsCount >= 6) {
+    if (!cls) {
+      return NextResponse.json({ error: 'Class not found' }, { status: 404 })
+    }
+
+    if (cls.bookedCount >= cls.capacity) {
       return NextResponse.json(
         { error: 'Class is full' },
         { status: 400 }
@@ -67,17 +69,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Find available stretcher number
-    const bookedStretchers = await prisma.booking.findMany({
-      where: {
-        classId,
-        status: 'confirmed'
-      },
-      select: {
-        stretcherNumber: true
-      }
-    })
-
-    const bookedNumbers = bookedStretchers.map(b => b.stretcherNumber)
+    const bookedNumbers = cls.bookings.map(b => b.stretcherNumber)
     const availableStretcher = [1, 2, 3, 4, 5, 6].find(num => !bookedNumbers.includes(num))
 
     if (!availableStretcher) {
@@ -87,7 +79,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create booking and deduct credit in a transaction
+    // Create booking, deduct credit, and increment bookedCount in a transaction
     const result = await prisma.$transaction(async (tx) => {
       // Create booking
       const booking = await tx.booking.create({
@@ -111,15 +103,101 @@ export async function POST(request: NextRequest) {
         }
       })
 
+      // Increment bookedCount on the class
+      await tx.class.update({
+        where: { id: classId },
+        data: { bookedCount: { increment: 1 } }
+      })
+
       return booking
     })
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: 'Class booked successfully',
       booking: result
     })
   } catch (error: any) {
     console.error('Booking error:', error)
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    )
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { userId, classId } = await request.json()
+
+    if (!userId || !classId) {
+      return NextResponse.json(
+        { error: 'User ID and Class ID required' },
+        { status: 400 }
+      )
+    }
+
+    // Find the booking
+    const booking = await prisma.booking.findUnique({
+      where: {
+        userId_classId: { userId, classId }
+      }
+    })
+
+    if (!booking) {
+      return NextResponse.json(
+        { error: 'Booking not found' },
+        { status: 404 }
+      )
+    }
+
+    // Cancel booking, reinstate credit, and decrement bookedCount in a transaction
+    await prisma.$transaction(async (tx) => {
+      // Delete the booking
+      await tx.booking.delete({
+        where: { id: booking.id }
+      })
+
+      // Decrement bookedCount on the class
+      await tx.class.update({
+        where: { id: classId },
+        data: { bookedCount: { decrement: 1 } }
+      })
+
+      // Find the oldest non-expired credit record to return the credit to
+      const creditRecord = await tx.userCredit.findFirst({
+        where: {
+          userId,
+          OR: [
+            { expiresAt: null },
+            { expiresAt: { gte: new Date() } }
+          ]
+        },
+        orderBy: { expiresAt: 'asc' }
+      })
+
+      if (creditRecord) {
+        await tx.userCredit.update({
+          where: { id: creditRecord.id },
+          data: { creditsRemaining: creditRecord.creditsRemaining + 1 }
+        })
+      } else {
+        // All credit records are expired — create a new one with 6-month expiry
+        const expiresAt = new Date()
+        expiresAt.setMonth(expiresAt.getMonth() + 6)
+        await tx.userCredit.create({
+          data: {
+            userId,
+            creditsRemaining: 1,
+            creditsTotal: 1,
+            expiresAt
+          }
+        })
+      }
+    })
+
+    return NextResponse.json({ message: 'Booking cancelled and credit reinstated' })
+  } catch (error: any) {
+    console.error('Cancel error:', error)
     return NextResponse.json(
       { error: error.message },
       { status: 500 }
