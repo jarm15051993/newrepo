@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-01-28.clover'
-})
-
 const PACKAGES = [
   { id: '1', name: '1 Class', classes: 1, price: 10 },
   { id: '2', name: '2 Classes', classes: 2, price: 15 },
@@ -13,6 +9,10 @@ const PACKAGES = [
 
 export async function POST(request: NextRequest) {
   try {
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: '2026-01-28.clover'
+    })
+
     const { packageId, userId, userEmail } = await request.json()
 
     // Find the package
