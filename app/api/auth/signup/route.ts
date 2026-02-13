@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Signup error:', error)
     return NextResponse.json(
-      { error: 'server', message: 'Internal server error' },
+      { error: 'server', message: 'Internal server error', _debug: { hasDbUrl: !!process.env.DATABASE_URL, hasDirectUrl: !!process.env.DIRECT_URL } },
       { status: 500 }
     )
   }
