@@ -22,8 +22,8 @@ model User {
   credits      UserCredit[]
   bookings     Booking[]
   transactions Transaction[]
+  payments     Payment[]
 }
-
 
 model Package {
   id          String   @id @default(cuid())
@@ -36,6 +36,7 @@ model Package {
   updatedAt   DateTime @updatedAt
   
   transactions Transaction[]
+  payments     Payment[]
 }
 
 model UserCredit {
@@ -66,6 +67,7 @@ model Booking {
   id        String   @id @default(cuid())
   userId    String
   classId   String
+  stretcherNumber Int
   status    String   @default("confirmed")
   createdAt DateTime @default(now())
   
@@ -73,6 +75,7 @@ model Booking {
   class Class @relation(fields: [classId], references: [id], onDelete: Cascade)
   
   @@unique([userId, classId])
+  @@unique([classId, stretcherNumber])
 }
 
 model Transaction {
@@ -83,6 +86,20 @@ model Transaction {
   stripePaymentId String?
   status          String
   createdAt       DateTime @default(now())
+  
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  package Package @relation(fields: [packageId], references: [id])
+}
+
+model Payment {
+  id                String   @id @default(cuid())
+  userId            String
+  packageId         String
+  amount            Float
+  stripeSessionId   String   @unique
+  stripePaymentId   String?
+  status            String   @default("pending")
+  createdAt         DateTime @default(now())
   
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   package Package @relation(fields: [packageId], references: [id])

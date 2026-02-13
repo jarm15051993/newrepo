@@ -3,23 +3,60 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
+interface Booking {
+  id: string
+  stretcherNumber: number
+  class: {
+    title: string
+    startTime: string
+    endTime: string
+    instructor: string | null
+  }
+}
+
 export default function DashboardPage() {
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [totalCredits, setTotalCredits] = useState(0)
+  const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([])
 
   useEffect(() => {
-    // Get user from localStorage
-    const userData = localStorage.getItem('user')
-    
-    if (!userData) {
-      // Not logged in, redirect to login
-      router.push('/login')
-      return
+    const fetchUserData = async () => {
+      const userData = localStorage.getItem('user')
+      
+      if (!userData) {
+        router.push('/login')
+        return
+      }
+
+      const parsedUser = JSON.parse(userData)
+      setUser(parsedUser)
+
+      try {
+        // Fetch credits
+        const creditsResponse = await fetch(`/api/user/credits?userId=${parsedUser.id}`)
+        const creditsData = await creditsResponse.json()
+
+        if (creditsResponse.ok) {
+          setTotalCredits(creditsData.totalCredits || 0)
+        }
+
+        // Fetch bookings
+        const bookingsResponse = await fetch(`/api/user/bookings?userId=${parsedUser.id}`)
+        const bookingsData = await bookingsResponse.json()
+
+        if (bookingsResponse.ok) {
+          setUpcomingBookings(bookingsData.bookings || [])
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error)
+      }
+
+      setLoading(false)
     }
 
-    setUser(JSON.parse(userData))
-    setLoading(false)
+    fetchUserData()
   }, [router])
 
   const handleLogout = () => {
@@ -97,7 +134,12 @@ export default function DashboardPage() {
         {/* Class Credits Card */}
         <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800 mb-6">
           <h2 className="text-2xl font-bold text-amber-400 mb-4">My Class Credits</h2>
-          <p className="text-white text-lg">You have <span className="text-amber-400 font-bold">0</span> classes remaining</p>
+          <p className="text-white text-lg">
+            You have <span className="text-amber-400 font-bold text-3xl">{totalCredits}</span> {totalCredits === 1 ? 'class' : 'classes'} remaining
+          </p>
+          {totalCredits === 0 && (
+            <p className="text-gray-400 text-sm mt-2">Purchase a package to start booking classes!</p>
+          )}
           <button 
             onClick={() => router.push('/packages')}
             className="mt-4 px-6 py-3 bg-amber-400 hover:bg-amber-500 text-black font-semibold rounded-lg transition"
@@ -109,9 +151,60 @@ export default function DashboardPage() {
         {/* Upcoming Classes Card */}
         <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800">
           <h2 className="text-2xl font-bold text-amber-400 mb-4">Upcoming Classes</h2>
-          <p className="text-gray-400">No upcoming classes booked yet.</p>
-          <button className="mt-4 px-6 py-3 bg-amber-400 hover:bg-amber-500 text-black font-semibold rounded-lg transition">
-            Book a Class
+          
+          {upcomingBookings.length === 0 ? (
+            <p className="text-gray-400 mb-4">No upcoming classes booked yet.</p>
+          ) : (
+            <div className="space-y-4 mb-6">
+              {upcomingBookings.map((booking) => (
+                <div 
+                  key={booking.id}
+                  className="bg-gray-800 rounded-lg p-4 border border-gray-700"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="text-lg font-semibold text-white">{booking.class.title}</h3>
+                    <span className="px-3 py-1 bg-amber-400 text-black text-xs font-bold rounded-full">
+                      Stretcher #{booking.stretcherNumber}
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-1 text-sm">
+                    <p className="text-gray-300">
+                      📅 {new Date(booking.class.startTime).toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric'
+                      })}
+                    </p>
+                    <p className="text-gray-300">
+                      🕐 {new Date(booking.class.startTime).toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })} - {new Date(booking.class.endTime).toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                    {booking.class.instructor && (
+                      <p className="text-gray-300">👤 {booking.class.instructor}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <button 
+            onClick={() => totalCredits > 0 ? router.push('/book') : router.push('/packages')}
+            disabled={totalCredits === 0}
+            className={`px-6 py-3 font-semibold rounded-lg transition ${
+              totalCredits === 0
+                ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                : 'bg-amber-400 hover:bg-amber-500 text-black'
+            }`}
+          >
+            {totalCredits > 0 ? 'Book a Class' : 'Buy Classes First'}
           </button>
         </div>
       </div>
