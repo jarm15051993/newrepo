@@ -3,6 +3,9 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url)
+    const userId = searchParams.get('userId')
+
     // Get classes from now onwards
     const classes = await prisma.class.findMany({
       where: {
@@ -10,21 +13,40 @@ export async function GET(request: NextRequest) {
           gte: new Date()
         }
       },
-      include: {
-        bookings: true
-      },
       orderBy: {
         startTime: 'asc'
       }
     })
 
-    // Add available spots info
-    const classesWithSpots = classes.map(cls => ({
-      ...cls,
-      bookedSpots: cls.bookings.filter(b => b.status === 'confirmed').length,
-      availableSpots: 6 - cls.bookings.filter(b => b.status === 'confirmed').length,
-      isFull: cls.bookings.filter(b => b.status === 'confirmed').length >= 6
-    }))
+    // If userId provided, fetch their bookings for these classes in one query
+    const userBookingMap: Record<string, number> = {}
+    if (userId && classes.length > 0) {
+      const userBookings = await prisma.booking.findMany({
+        where: {
+          userId,
+          classId: { in: classes.map(c => c.id) },
+          status: 'confirmed'
+        },
+        select: { classId: true, stretcherNumber: true }
+      })
+      for (const b of userBookings) {
+        userBookingMap[b.classId] = b.stretcherNumber
+      }
+    }
+
+    // Use stored bookedCount for capacity info
+    const classesWithSpots = classes.map(cls => {
+      const stretcherNumber = userBookingMap[cls.id] ?? null
+      const bookedCount = cls.bookedCount ?? 0
+      return {
+        ...cls,
+        bookedSpots: bookedCount,
+        availableSpots: cls.capacity - bookedCount,
+        isFull: bookedCount >= cls.capacity,
+        isBooked: stretcherNumber !== null,
+        userStretcherNumber: stretcherNumber
+      }
+    })
 
     return NextResponse.json({ classes: classesWithSpots })
   } catch (error: any) {

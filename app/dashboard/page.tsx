@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 interface Booking {
   id: string
@@ -14,17 +15,87 @@ interface Booking {
   }
 }
 
+const ALLOWED_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.heic', '.heif']
+
 export default function DashboardPage() {
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [totalCredits, setTotalCredits] = useState(0)
   const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([])
+  const [profilePicture, setProfilePicture] = useState<string | null>(null)
+  const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle')
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleFileUpload = useCallback(async (file: File) => {
+    const fileName = file.name.toLowerCase()
+    const hasValidExtension = ALLOWED_EXTENSIONS.some(ext => fileName.endsWith(ext))
+    if (!hasValidExtension) {
+      setUploadError('Only .png, .jpg, .jpeg, .heic, and .heif files are allowed')
+      setUploadStatus('error')
+      return
+    }
+
+    setUploadStatus('uploading')
+    setUploadError(null)
+
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('userId', user.id)
+
+    try {
+      const response = await fetch('/api/user/profile-picture', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Upload failed')
+      }
+
+      setProfilePicture(data.profilePicture)
+      setUploadStatus('success')
+
+      // Update localStorage so the picture persists across navigation
+      const stored = localStorage.getItem('user')
+      if (stored) {
+        const updated = { ...JSON.parse(stored), profilePicture: data.profilePicture }
+        localStorage.setItem('user', JSON.stringify(updated))
+        setUser(updated)
+      }
+    } catch (error: any) {
+      setUploadError(error.message || 'Upload failed. Please try again.')
+      setUploadStatus('error')
+    }
+  }, [user])
+
+  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragging(false)
+    const file = e.dataTransfer.files[0]
+    if (file) handleFileUpload(file)
+  }, [handleFileUpload])
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = () => setIsDragging(false)
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) handleFileUpload(file)
+  }
 
   useEffect(() => {
     const fetchUserData = async () => {
       const userData = localStorage.getItem('user')
-      
+
       if (!userData) {
         router.push('/login')
         return
@@ -32,6 +103,7 @@ export default function DashboardPage() {
 
       const parsedUser = JSON.parse(userData)
       setUser(parsedUser)
+      setProfilePicture(parsedUser.profilePicture || null)
 
       try {
         // Fetch credits
@@ -93,7 +165,71 @@ export default function DashboardPage() {
         {/* Profile Card */}
         <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800 mb-6">
           <h2 className="text-2xl font-bold text-amber-400 mb-6">My Profile</h2>
-          
+
+          {/* Profile Picture */}
+          <div className="mb-8">
+            <label className="block text-sm font-medium text-gray-400 mb-3">Profile Picture</label>
+            <div className="flex items-start gap-6">
+              {/* Avatar preview */}
+              <div className="flex-shrink-0 w-24 h-24 rounded-full overflow-hidden bg-gray-800 border-2 border-gray-700 flex items-center justify-center">
+                {profilePicture ? (
+                  <Image
+                    src={profilePicture}
+                    alt="Profile"
+                    width={96}
+                    height={96}
+                    className="object-cover w-full h-full"
+                  />
+                ) : (
+                  <svg className="w-10 h-10 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                )}
+              </div>
+
+              {/* Dropzone */}
+              <div
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onClick={() => fileInputRef.current?.click()}
+                className={`flex-1 border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${
+                  isDragging
+                    ? 'border-amber-400 bg-amber-400/10'
+                    : 'border-gray-700 hover:border-amber-400 hover:bg-gray-800'
+                }`}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".png,.jpg,.jpeg,.heic,.heif"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+                {uploadStatus === 'uploading' ? (
+                  <p className="text-amber-400 text-sm">Uploading...</p>
+                ) : (
+                  <>
+                    <svg className="w-8 h-8 text-gray-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    <p className="text-gray-400 text-sm">
+                      Drag & drop or <span className="text-amber-400">browse</span>
+                    </p>
+                    <p className="text-gray-600 text-xs mt-1">.png, .jpg, .jpeg, .heic, .heif — max 10MB</p>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {uploadStatus === 'success' && (
+              <p className="mt-2 text-green-400 text-sm">Profile picture updated!</p>
+            )}
+            {uploadStatus === 'error' && uploadError && (
+              <p className="mt-2 text-red-400 text-sm">{uploadError}</p>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-400 mb-1">First Name</label>
