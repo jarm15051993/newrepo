@@ -22,6 +22,7 @@ export default function BookClassPage() {
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
   const [classes, setClasses] = useState<Class[]>([])
+  const [totalCredits, setTotalCredits] = useState(0)
   const [loading, setLoading] = useState(true)
   const [processingClass, setProcessingClass] = useState<string | null>(null)
 
@@ -38,17 +39,26 @@ export default function BookClassPage() {
   }
 
   useEffect(() => {
-    const userData = localStorage.getItem('user')
+    const init = async () => {
+      const userData = localStorage.getItem('user')
 
-    if (!userData) {
-      router.push('/login')
-      return
+      if (!userData) {
+        router.push('/login')
+        return
+      }
+
+      const parsedUser = JSON.parse(userData)
+      setUser(parsedUser)
+
+      const [, creditsRes] = await Promise.all([
+        fetchClasses(parsedUser.id),
+        fetch(`/api/user/credits?userId=${parsedUser.id}`),
+      ])
+      const creditsData = await creditsRes.json()
+      if (creditsRes.ok) setTotalCredits(creditsData.totalCredits ?? 0)
+      setLoading(false)
     }
-
-    const parsedUser = JSON.parse(userData)
-    setUser(parsedUser)
-
-    fetchClasses(parsedUser.id).finally(() => setLoading(false))
+    init()
   }, [router])
 
   const handleBookClass = async (classId: string) => {
@@ -66,10 +76,11 @@ export default function BookClassPage() {
         })
         return
       }
-      toast.success(`Class booked! Your stretcher is #${data.booking.stretcherNumber}`, {
+      toast.success(`Class booked! Your reformer is #${data.booking.stretcherNumber}`, {
         duration: 4000,
         style: { background: '#1a1a1a', color: '#fbbf24', border: '1px solid #22c55e' },
       })
+      setTotalCredits(c => Math.max(0, c - 1))
       await fetchClasses(user.id)
     } catch (error) {
       toast.error('Network error. Please try again.', {
@@ -99,6 +110,7 @@ export default function BookClassPage() {
         duration: 4000,
         style: { background: '#1a1a1a', color: '#fbbf24', border: '1px solid #22c55e' },
       })
+      setTotalCredits(c => c + 1)
       await fetchClasses(user.id)
     } catch (error) {
       toast.error('Network error. Please try again.', {
@@ -160,7 +172,7 @@ export default function BookClassPage() {
                         : 'bg-green-900/20 text-green-400 border border-green-500'
                     }`}>
                       {cls.isBooked
-                        ? `Stretcher #${cls.userStretcherNumber}`
+                        ? `Reformer #${cls.userStretcherNumber}`
                         : cls.isFull
                         ? 'Full'
                         : `${cls.availableSpots} spots left`}
@@ -217,7 +229,7 @@ export default function BookClassPage() {
                     </button>
                   ) : (
                     <button
-                      onClick={() => handleBookClass(cls.id)}
+                      onClick={() => totalCredits === 0 ? router.push('/packages') : handleBookClass(cls.id)}
                       disabled={cls.isFull || isProcessing}
                       className={`w-full py-3 rounded-lg font-semibold transition ${
                         cls.isFull
@@ -227,7 +239,7 @@ export default function BookClassPage() {
                           : 'bg-amber-400 hover:bg-amber-500 text-black'
                       }`}
                     >
-                      {isProcessing ? 'Booking...' : cls.isFull ? 'Class Full' : 'Book Now'}
+                      {isProcessing ? 'Booking...' : cls.isFull ? 'Class Full' : totalCredits === 0 ? 'Buy More Classes' : 'Book Now'}
                     </button>
                   )}
                 </div>

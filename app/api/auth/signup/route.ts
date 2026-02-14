@@ -5,7 +5,8 @@ import bcrypt from 'bcryptjs'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, password, name, lastName, phone, birthday, additionalInfo } = body
+    const { email: rawEmail, password, name, lastName, phone, birthday, additionalInfo } = body
+    const email = rawEmail?.trim().toLowerCase()
 
     // Validate required fields
     if (!email || !password || !name || !lastName || !phone || !birthday) {
@@ -16,8 +17,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already exists by email
-    const existingUserByEmail = await prisma.user.findUnique({
-      where: { email }
+    const existingUserByEmail = await prisma.user.findFirst({
+      where: { email: { equals: email, mode: 'insensitive' } }
     })
 
     if (existingUserByEmail) {

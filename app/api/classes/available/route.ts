@@ -36,15 +36,15 @@ export async function GET(request: NextRequest) {
 
     // Use stored bookedCount for capacity info
     const classesWithSpots = classes.map(cls => {
-      const stretcherNumber = userBookingMap[cls.id] ?? null
+      const reformerNumber = userBookingMap[cls.id] ?? null
       const bookedCount = cls.bookedCount ?? 0
       return {
         ...cls,
         bookedSpots: bookedCount,
         availableSpots: cls.capacity - bookedCount,
         isFull: bookedCount >= cls.capacity,
-        isBooked: stretcherNumber !== null,
-        userStretcherNumber: stretcherNumber
+        isBooked: reformerNumber !== null,
+        userStretcherNumber: reformerNumber
       }
     })
 

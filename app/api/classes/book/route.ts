@@ -68,13 +68,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Find available stretcher number
+    // Find available reformer number
     const bookedNumbers = cls.bookings.map(b => b.stretcherNumber)
-    const availableStretcher = [1, 2, 3, 4, 5, 6].find(num => !bookedNumbers.includes(num))
+    const availableReformer = [1, 2, 3, 4, 5, 6].find(num => !bookedNumbers.includes(num))
 
-    if (!availableStretcher) {
+    if (!availableReformer) {
       return NextResponse.json(
-        { error: 'No stretchers available' },
+        { error: 'No reformers available' },
         { status: 400 }
       )
     }
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
         data: {
           userId,
           classId,
-          stretcherNumber: availableStretcher,
+          stretcherNumber: availableReformer,
           status: 'confirmed'
         },
         include: {
