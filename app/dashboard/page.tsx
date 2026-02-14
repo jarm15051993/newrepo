@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 
 interface Booking {
   id: string
+  classId: string
   stretcherNumber: number
   class: {
     title: string
@@ -24,9 +24,11 @@ export default function DashboardPage() {
   const [totalCredits, setTotalCredits] = useState(0)
   const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([])
   const [profilePicture, setProfilePicture] = useState<string | null>(null)
+  const [pictureVersion, setPictureVersion] = useState(0)
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle')
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [cancellingId, setCancellingId] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileUpload = useCallback(async (file: File) => {
@@ -58,6 +60,7 @@ export default function DashboardPage() {
       }
 
       setProfilePicture(data.profilePicture)
+      setPictureVersion(v => v + 1)
       setUploadStatus('success')
 
       // Update localStorage so the picture persists across navigation
@@ -131,6 +134,25 @@ export default function DashboardPage() {
     fetchUserData()
   }, [router])
 
+  const handleCancelBooking = async (booking: Booking) => {
+    setCancellingId(booking.id)
+    try {
+      const response = await fetch('/api/classes/book', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, classId: booking.classId })
+      })
+
+      if (response.ok) {
+        setUpcomingBookings(prev => prev.filter(b => b.id !== booking.id))
+        setTotalCredits(prev => prev + 1)
+      }
+    } catch (error) {
+      console.error('Error cancelling booking:', error)
+    }
+    setCancellingId(null)
+  }
+
   const handleLogout = () => {
     localStorage.removeItem('user')
     router.push('/login')
@@ -169,34 +191,17 @@ export default function DashboardPage() {
           {/* Profile Picture */}
           <div className="mb-8">
             <label className="block text-sm font-medium text-gray-400 mb-3">Profile Picture</label>
-            <div className="flex items-start gap-6">
-              {/* Avatar preview */}
-              <div className="flex-shrink-0 w-24 h-24 rounded-full overflow-hidden bg-gray-800 border-2 border-gray-700 flex items-center justify-center">
-                {profilePicture ? (
-                  <Image
-                    src={profilePicture}
-                    alt="Profile"
-                    width={96}
-                    height={96}
-                    className="object-cover w-full h-full"
-                  />
-                ) : (
-                  <svg className="w-10 h-10 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                )}
-              </div>
-
-              {/* Dropzone */}
+            <div className="flex items-center gap-4">
+              {/* Avatar — click or drag to upload */}
               <div
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onClick={() => fileInputRef.current?.click()}
-                className={`flex-1 border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${
+                className={`relative flex-shrink-0 w-24 h-24 rounded-full overflow-hidden cursor-pointer group border-2 transition-colors ${
                   isDragging
-                    ? 'border-amber-400 bg-amber-400/10'
-                    : 'border-gray-700 hover:border-amber-400 hover:bg-gray-800'
+                    ? 'border-amber-400'
+                    : 'border-gray-700 hover:border-amber-400'
                 }`}
               >
                 <input
@@ -206,19 +211,41 @@ export default function DashboardPage() {
                   className="hidden"
                   onChange={handleFileChange}
                 />
-                {uploadStatus === 'uploading' ? (
-                  <p className="text-amber-400 text-sm">Uploading...</p>
+
+                {/* Picture or placeholder */}
+                {profilePicture ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={`/api/user/profile-picture?userId=${user?.id}&v=${pictureVersion}`}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
-                  <>
-                    <svg className="w-8 h-8 text-gray-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                    <svg className="w-10 h-10 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
-                    <p className="text-gray-400 text-sm">
-                      Drag & drop or <span className="text-amber-400">browse</span>
-                    </p>
-                    <p className="text-gray-600 text-xs mt-1">.png, .jpg, .jpeg, .heic, .heif — max 10MB</p>
-                  </>
+                  </div>
                 )}
+
+                {/* Hover overlay */}
+                <div className={`absolute inset-0 bg-black/50 flex items-center justify-center transition-opacity ${
+                  uploadStatus === 'uploading' ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                }`}>
+                  {uploadStatus === 'uploading' ? (
+                    <div className="w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-gray-400 text-sm">Click or drag a photo to upload</p>
+                <p className="text-gray-600 text-xs mt-1">.png, .jpg, .jpeg, .heic, .heif — max 10MB</p>
               </div>
             </div>
 
@@ -300,11 +327,11 @@ export default function DashboardPage() {
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="text-lg font-semibold text-white">{booking.class.title}</h3>
                     <span className="px-3 py-1 bg-amber-400 text-black text-xs font-bold rounded-full">
-                      Stretcher #{booking.stretcherNumber}
+                      Reformer #{booking.stretcherNumber}
                     </span>
                   </div>
                   
-                  <div className="space-y-1 text-sm">
+                  <div className="space-y-1 text-sm mb-3">
                     <p className="text-gray-300">
                       📅 {new Date(booking.class.startTime).toLocaleDateString('en-US', {
                         weekday: 'long',
@@ -326,6 +353,13 @@ export default function DashboardPage() {
                       <p className="text-gray-300">👤 {booking.class.instructor}</p>
                     )}
                   </div>
+                  <button
+                    onClick={() => handleCancelBooking(booking)}
+                    disabled={cancellingId === booking.id}
+                    className="px-4 py-1.5 bg-red-900 hover:bg-red-800 disabled:bg-gray-700 disabled:text-gray-500 text-red-300 text-sm font-medium rounded-lg transition"
+                  >
+                    {cancellingId === booking.id ? 'Cancelling...' : 'Cancel Booking'}
+                  </button>
                 </div>
               ))}
             </div>

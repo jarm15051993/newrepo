@@ -392,10 +392,10 @@ export default function AdminPage() {
                           </div>
                         )}
 
-                        {/* Empty stretcher slots */}
+                        {/* Empty reformer slots */}
                         {spotsLeft > 0 && (
                           <div className="mt-4">
-                            <p className="text-gray-600 text-xs uppercase tracking-wider mb-2">Available stretchers</p>
+                            <p className="text-gray-600 text-xs uppercase tracking-wider mb-2">Available reformers</p>
                             <div className="flex flex-wrap gap-2">
                               {Array.from({ length: cls.capacity }, (_, i) => i + 1)
                                 .filter(n => !cls.bookings.some(b => b.stretcherNumber === n))
