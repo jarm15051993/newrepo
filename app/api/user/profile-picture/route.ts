@@ -2,13 +2,25 @@ import { NextRequest, NextResponse } from 'next/server'
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3'
 import { prisma } from '@/lib/prisma'
 
-const s3 = new S3Client({
-  region: process.env.AWS_REGION!,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-})
+function getS3Client() {
+  const region = process.env.AWS_REGION
+  const accessKeyId = process.env.AWS_ACCESS_KEY_ID
+  const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY
+
+  if (!region || !accessKeyId || !secretAccessKey) {
+    const missing = [
+      !region && 'AWS_REGION',
+      !accessKeyId && 'AWS_ACCESS_KEY_ID',
+      !secretAccessKey && 'AWS_SECRET_ACCESS_KEY',
+    ].filter(Boolean).join(', ')
+    throw new Error(`Missing AWS environment variables: ${missing}`)
+  }
+
+  return new S3Client({
+    region,
+    credentials: { accessKeyId, secretAccessKey },
+  })
+}
 
 const ALLOWED_MIME_TYPES = [
   'image/png',
@@ -43,7 +55,7 @@ export async function GET(request: NextRequest) {
     const s3Url = new URL(user.profilePicture)
     const key = s3Url.pathname.slice(1)
 
-    const s3Response = await s3.send(
+    const s3Response = await getS3Client().send(
       new GetObjectCommand({
         Bucket: process.env.AWS_S3_BUCKET_NAME!,
         Key: key,
@@ -115,7 +127,7 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes)
 
     // Upload to S3
-    await s3.send(
+    await getS3Client().send(
       new PutObjectCommand({
         Bucket: process.env.AWS_S3_BUCKET_NAME!,
         Key: key,

@@ -132,6 +132,15 @@ export default function DashboardPage() {
     }
 
     fetchUserData()
+
+    // Re-run when the page is restored from bfcache (back/forward navigation)
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        fetchUserData()
+      }
+    }
+    window.addEventListener('pageshow', handlePageShow)
+    return () => window.removeEventListener('pageshow', handlePageShow)
   }, [router])
 
   const handleCancelBooking = async (booking: Booking) => {
