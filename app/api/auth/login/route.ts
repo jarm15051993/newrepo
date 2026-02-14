@@ -19,8 +19,6 @@ export async function POST(request: NextRequest) {
       where: { email: { equals: email.trim(), mode: 'insensitive' } }
     })
 
-    console.log('[login] email lookup:', email.trim(), '→ found:', !!user)
-
     if (!user) {
       return NextResponse.json(
         { error: 'Invalid credentials' },
@@ -30,8 +28,6 @@ export async function POST(request: NextRequest) {
 
     // Check password
     const passwordMatch = await bcrypt.compare(password, user.password)
-
-    console.log('[login] password match:', passwordMatch, '| hash prefix:', user.password.slice(0, 7))
 
     if (!passwordMatch) {
       return NextResponse.json(
