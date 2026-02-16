@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { sendEmail } from '@/lib/email'
 
 export async function POST(request: NextRequest) {
   try {
@@ -111,6 +112,23 @@ export async function POST(request: NextRequest) {
 
       return booking
     })
+
+    // Send booking confirmation email (fire-and-forget)
+    prisma.user.findUnique({ where: { id: userId }, select: { email: true, name: true } })
+      .then(user => {
+        if (!user) return
+        const cls = result.class
+        const date = new Date(cls.startTime).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+        const time = `${new Date(cls.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} - ${new Date(cls.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`
+        return sendEmail({
+          to: user.email,
+          type: 'booking_confirmation',
+          userId,
+          vars: { name: user.name, classTitle: cls.title, date, time, reformerNumber: String(result.stretcherNumber) },
+          metadata: { bookingId: result.id, classId },
+        })
+      })
+      .catch(e => console.error('[book] Failed to send confirmation email:', e))
 
     return NextResponse.json({
       message: 'Class booked successfully',

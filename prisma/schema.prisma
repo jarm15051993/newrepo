@@ -16,15 +16,19 @@ model User {
   lastName  String
   phone     String   @unique
   birthday  DateTime
-  additionalInfo String?
-  profilePicture String?
+  additionalInfo  String?
+  profilePicture  String?
+  activationToken String?  @unique
+  activatedAt     DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  credits      UserCredit[]
-  bookings     Booking[]
-  transactions Transaction[]
-  payments     Payment[]
+
+  credits             UserCredit[]
+  bookings            Booking[]
+  transactions        Transaction[]
+  payments            Payment[]
+  passwordResetTokens PasswordResetToken[]
+  emailLogs           EmailLog[]
 }
 
 model Package {
@@ -103,7 +107,40 @@ model Payment {
   stripePaymentId   String?
   status            String   @default("pending")
   createdAt         DateTime @default(now())
-  
+
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   package Package @relation(fields: [packageId], references: [id])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model EmailTemplate {
+  id        String   @id @default(cuid())
+  type      String   @unique
+  subject   String
+  htmlBody  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model EmailLog {
+  id       String   @id @default(cuid())
+  userId   String?
+  to       String
+  type     String
+  subject  String
+  status   String
+  metadata Json?
+  sentAt   DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 }
