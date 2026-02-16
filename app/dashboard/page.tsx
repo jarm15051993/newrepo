@@ -17,6 +17,58 @@ interface Booking {
 
 const ALLOWED_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.heic', '.heif']
 
+const COUNTRY_CODES = [
+  { code: '+1',   label: '+1 (US/Canada)' },
+  { code: '+52',  label: '+52 (Mexico)' },
+  { code: '+54',  label: '+54 (Argentina)' },
+  { code: '+55',  label: '+55 (Brazil)' },
+  { code: '+56',  label: '+56 (Chile)' },
+  { code: '+57',  label: '+57 (Colombia)' },
+  { code: '+51',  label: '+51 (Peru)' },
+  { code: '+58',  label: '+58 (Venezuela)' },
+  { code: '+593', label: '+593 (Ecuador)' },
+  { code: '+595', label: '+595 (Paraguay)' },
+  { code: '+598', label: '+598 (Uruguay)' },
+  { code: '+507', label: '+507 (Panama)' },
+  { code: '+506', label: '+506 (Costa Rica)' },
+  { code: '+503', label: '+503 (El Salvador)' },
+  { code: '+502', label: '+502 (Guatemala)' },
+  { code: '+504', label: '+504 (Honduras)' },
+  { code: '+505', label: '+505 (Nicaragua)' },
+  { code: '+53',  label: '+53 (Cuba)' },
+  { code: '+44',  label: '+44 (UK)' },
+  { code: '+34',  label: '+34 (Spain)' },
+  { code: '+33',  label: '+33 (France)' },
+  { code: '+49',  label: '+49 (Germany)' },
+  { code: '+39',  label: '+39 (Italy)' },
+  { code: '+61',  label: '+61 (Australia)' },
+  { code: '+91',  label: '+91 (India)' },
+  { code: '+81',  label: '+81 (Japan)' },
+  { code: '+82',  label: '+82 (South Korea)' },
+  { code: '+86',  label: '+86 (China)' },
+]
+
+function parsePhone(phone: string): { code: string; number: string } {
+  if (!phone) return { code: '+1', number: '' }
+  const sorted = [...COUNTRY_CODES].sort((a, b) => b.code.length - a.code.length)
+  for (const { code } of sorted) {
+    if (phone.startsWith(code)) {
+      return { code, number: phone.slice(code.length) }
+    }
+  }
+  return { code: '+1', number: phone.replace(/\D/g, '') }
+}
+
+const inputClass = 'bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-1.5 text-base focus:outline-none focus:border-amber-400'
+
+function PencilIcon() {
+  return (
+    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 2.828L11.828 15.828a4 4 0 01-2.828 1.172H7v-2a4 4 0 011.172-2.828z" />
+    </svg>
+  )
+}
+
 export default function DashboardPage() {
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
@@ -29,6 +81,15 @@ export default function DashboardPage() {
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [cancellingId, setCancellingId] = useState<string | null>(null)
+
+  // Per-field inline editing
+  const [editingField, setEditingField] = useState<string | null>(null)
+  const [editValue, setEditValue] = useState('')
+  const [editPhoneCode, setEditPhoneCode] = useState('+1')
+  const [editPhoneNumber, setEditPhoneNumber] = useState('')
+  const [fieldSaving, setFieldSaving] = useState(false)
+  const [fieldError, setFieldError] = useState<string | null>(null)
+
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileUpload = useCallback(async (file: File) => {
@@ -63,7 +124,6 @@ export default function DashboardPage() {
       setPictureVersion(v => v + 1)
       setUploadStatus('success')
 
-      // Update localStorage so the picture persists across navigation
       const stored = localStorage.getItem('user')
       if (stored) {
         const updated = { ...JSON.parse(stored), profilePicture: data.profilePicture }
@@ -109,21 +169,13 @@ export default function DashboardPage() {
       setProfilePicture(parsedUser.profilePicture || null)
 
       try {
-        // Fetch credits
         const creditsResponse = await fetch(`/api/user/credits?userId=${parsedUser.id}`)
         const creditsData = await creditsResponse.json()
+        if (creditsResponse.ok) setTotalCredits(creditsData.totalCredits || 0)
 
-        if (creditsResponse.ok) {
-          setTotalCredits(creditsData.totalCredits || 0)
-        }
-
-        // Fetch bookings
         const bookingsResponse = await fetch(`/api/user/bookings?userId=${parsedUser.id}`)
         const bookingsData = await bookingsResponse.json()
-
-        if (bookingsResponse.ok) {
-          setUpcomingBookings(bookingsData.bookings || [])
-        }
+        if (bookingsResponse.ok) setUpcomingBookings(bookingsData.bookings || [])
       } catch (error) {
         console.error('Error fetching data:', error)
       }
@@ -133,15 +185,57 @@ export default function DashboardPage() {
 
     fetchUserData()
 
-    // Re-run when the page is restored from bfcache (back/forward navigation)
     const handlePageShow = (e: PageTransitionEvent) => {
-      if (e.persisted) {
-        fetchUserData()
-      }
+      if (e.persisted) fetchUserData()
     }
     window.addEventListener('pageshow', handlePageShow)
     return () => window.removeEventListener('pageshow', handlePageShow)
   }, [router])
+
+  const startEditField = (field: string) => {
+    setEditingField(field)
+    setFieldError(null)
+    if (field === 'phone') {
+      const parsed = parsePhone(user.phone || '')
+      setEditPhoneCode(parsed.code)
+      setEditPhoneNumber(parsed.number)
+    } else if (field === 'birthday') {
+      setEditValue(user.birthday ? new Date(user.birthday).toISOString().split('T')[0] : '')
+    } else {
+      setEditValue(user[field] || '')
+    }
+  }
+
+  const cancelEditField = () => {
+    setEditingField(null)
+    setFieldError(null)
+  }
+
+  const saveField = async (field: string) => {
+    setFieldSaving(true)
+    setFieldError(null)
+
+    const value = field === 'phone' ? `${editPhoneCode}${editPhoneNumber}` : editValue
+
+    try {
+      const response = await fetch('/api/user/update', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, [field]: value }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Update failed')
+
+      const updated = { ...user, ...data.user }
+      setUser(updated)
+      localStorage.setItem('user', JSON.stringify(updated))
+      setEditingField(null)
+    } catch (error: any) {
+      setFieldError(error.message || 'Update failed. Please try again.')
+    } finally {
+      setFieldSaving(false)
+    }
+  }
 
   const handleCancelBooking = async (booking: Booking) => {
     setCancellingId(booking.id)
@@ -175,9 +269,60 @@ export default function DashboardPage() {
     )
   }
 
-  if (!user) {
-    return null
-  }
+  if (!user) return null
+
+  // Reusable inline field row
+  const FieldRow = ({
+    field,
+    label,
+    display,
+    editContent,
+  }: {
+    field: string
+    label: string
+    display: React.ReactNode
+    editContent: React.ReactNode
+  }) => (
+    <div className="group">
+      <div className="flex items-center gap-1.5 mb-1">
+        <label className="text-sm font-medium text-gray-400">{label}</label>
+        {editingField !== field && (
+          <button
+            onClick={() => startEditField(field)}
+            className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-amber-400 transition-opacity"
+            title={`Edit ${label}`}
+          >
+            <PencilIcon />
+          </button>
+        )}
+      </div>
+
+      {editingField === field ? (
+        <div className="space-y-2">
+          {editContent}
+          {fieldError && <p className="text-red-400 text-xs">{fieldError}</p>}
+          <div className="flex gap-2">
+            <button
+              onClick={() => saveField(field)}
+              disabled={fieldSaving}
+              className="px-3 py-1 bg-amber-400 hover:bg-amber-500 disabled:bg-amber-400/50 text-black text-sm font-semibold rounded-lg transition"
+            >
+              {fieldSaving ? 'Saving…' : 'Save'}
+            </button>
+            <button
+              onClick={cancelEditField}
+              disabled={fieldSaving}
+              className="px-3 py-1 bg-gray-800 hover:bg-gray-700 text-white text-sm rounded-lg transition"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <p className="text-white text-base">{display}</p>
+      )}
+    </div>
+  )
 
   return (
     <div className="min-h-screen bg-black p-8">
@@ -201,16 +346,13 @@ export default function DashboardPage() {
           <div className="mb-8">
             <label className="block text-sm font-medium text-gray-400 mb-3">Profile Picture</label>
             <div className="flex items-center gap-4">
-              {/* Avatar — click or drag to upload */}
               <div
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onClick={() => fileInputRef.current?.click()}
                 className={`relative flex-shrink-0 w-24 h-24 rounded-full overflow-hidden cursor-pointer group border-2 transition-colors ${
-                  isDragging
-                    ? 'border-amber-400'
-                    : 'border-gray-700 hover:border-amber-400'
+                  isDragging ? 'border-amber-400' : 'border-gray-700 hover:border-amber-400'
                 }`}
               >
                 <input
@@ -220,8 +362,6 @@ export default function DashboardPage() {
                   className="hidden"
                   onChange={handleFileChange}
                 />
-
-                {/* Picture or placeholder */}
                 {profilePicture ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -236,8 +376,6 @@ export default function DashboardPage() {
                     </svg>
                   </div>
                 )}
-
-                {/* Hover overlay */}
                 <div className={`absolute inset-0 bg-black/50 flex items-center justify-center transition-opacity ${
                   uploadStatus === 'uploading' ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                 }`}>
@@ -251,13 +389,11 @@ export default function DashboardPage() {
                   )}
                 </div>
               </div>
-
               <div>
                 <p className="text-gray-400 text-sm">Click or drag a photo to upload</p>
                 <p className="text-gray-600 text-xs mt-1">.png, .jpg, .jpeg, .heic, .heif — max 10MB</p>
               </div>
             </div>
-
             {uploadStatus === 'success' && (
               <p className="mt-2 text-green-400 text-sm">Profile picture updated!</p>
             )}
@@ -266,40 +402,112 @@ export default function DashboardPage() {
             )}
           </div>
 
+          {/* Profile Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-1">First Name</label>
-              <p className="text-white text-lg">{user.name}</p>
-            </div>
+            <FieldRow
+              field="name"
+              label="First Name"
+              display={user.name}
+              editContent={
+                <input
+                  type="text"
+                  value={editValue}
+                  onChange={e => setEditValue(e.target.value)}
+                  className={inputClass}
+                  autoFocus
+                />
+              }
+            />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-1">Last Name</label>
-              <p className="text-white text-lg">{user.lastName}</p>
-            </div>
+            <FieldRow
+              field="lastName"
+              label="Last Name"
+              display={user.lastName}
+              editContent={
+                <input
+                  type="text"
+                  value={editValue}
+                  onChange={e => setEditValue(e.target.value)}
+                  className={inputClass}
+                  autoFocus
+                />
+              }
+            />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-1">Email</label>
-              <p className="text-white text-lg">{user.email}</p>
-            </div>
+            <FieldRow
+              field="email"
+              label="Email"
+              display={user.email}
+              editContent={
+                <input
+                  type="email"
+                  value={editValue}
+                  onChange={e => setEditValue(e.target.value)}
+                  className={inputClass}
+                  autoFocus
+                />
+              }
+            />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-1">Phone</label>
-              <p className="text-white text-lg">{user.phone}</p>
-            </div>
+            <FieldRow
+              field="phone"
+              label="Phone"
+              display={user.phone}
+              editContent={
+                <div className="flex gap-2">
+                  <select
+                    value={editPhoneCode}
+                    onChange={e => setEditPhoneCode(e.target.value)}
+                    className={`${inputClass} flex-shrink-0`}
+                  >
+                    {COUNTRY_CODES.map(({ code, label }) => (
+                      <option key={code} value={code}>{label}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={editPhoneNumber}
+                    onChange={e => setEditPhoneNumber(e.target.value.replace(/\D/g, ''))}
+                    placeholder="1234567890"
+                    className={`${inputClass} flex-1 min-w-0`}
+                    autoFocus
+                  />
+                </div>
+              }
+            />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-1">Birthday</label>
-              <p className="text-white text-lg">
-                {new Date(user.birthday).toLocaleDateString()}
-              </p>
-            </div>
+            <FieldRow
+              field="birthday"
+              label="Birthday"
+              display={new Date(user.birthday).toLocaleDateString()}
+              editContent={
+                <input
+                  type="date"
+                  value={editValue}
+                  onChange={e => setEditValue(e.target.value)}
+                  className={inputClass}
+                  autoFocus
+                />
+              }
+            />
 
-            {user.additionalInfo && (
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-400 mb-1">More Info</label>
-                <p className="text-white text-lg">{user.additionalInfo}</p>
-              </div>
-            )}
+            <div className="md:col-span-2">
+              <FieldRow
+                field="additionalInfo"
+                label="Additional Info"
+                display={user.additionalInfo || <span className="text-gray-600 italic">—</span>}
+                editContent={
+                  <textarea
+                    value={editValue}
+                    onChange={e => setEditValue(e.target.value)}
+                    rows={3}
+                    className={`${inputClass} w-full resize-none`}
+                    autoFocus
+                  />
+                }
+              />
+            </div>
           </div>
         </div>
 
@@ -312,7 +520,7 @@ export default function DashboardPage() {
           {totalCredits === 0 && (
             <p className="text-gray-400 text-sm mt-2">Purchase a package to start booking classes!</p>
           )}
-          <button 
+          <button
             onClick={() => router.push('/packages')}
             className="mt-4 px-6 py-3 bg-amber-400 hover:bg-amber-500 text-black font-semibold rounded-lg transition"
           >
@@ -323,13 +531,13 @@ export default function DashboardPage() {
         {/* Upcoming Classes Card */}
         <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800">
           <h2 className="text-2xl font-bold text-amber-400 mb-4">Upcoming Classes</h2>
-          
+
           {upcomingBookings.length === 0 ? (
             <p className="text-gray-400 mb-4">No upcoming classes booked yet.</p>
           ) : (
             <div className="space-y-4 mb-6">
               {upcomingBookings.map((booking) => (
-                <div 
+                <div
                   key={booking.id}
                   className="bg-gray-800 rounded-lg p-4 border border-gray-700"
                 >
@@ -339,24 +547,16 @@ export default function DashboardPage() {
                       Reformer #{booking.stretcherNumber}
                     </span>
                   </div>
-                  
+
                   <div className="space-y-1 text-sm mb-3">
                     <p className="text-gray-300">
                       📅 {new Date(booking.class.startTime).toLocaleDateString('en-US', {
-                        weekday: 'long',
-                        month: 'long',
-                        day: 'numeric',
-                        year: 'numeric'
+                        weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
                       })}
                     </p>
                     <p className="text-gray-300">
-                      🕐 {new Date(booking.class.startTime).toLocaleTimeString('en-US', {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })} - {new Date(booking.class.endTime).toLocaleTimeString('en-US', {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
+                      🕐 {new Date(booking.class.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} -{' '}
+                      {new Date(booking.class.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                     </p>
                     {booking.class.instructor && (
                       <p className="text-gray-300">👤 {booking.class.instructor}</p>
@@ -374,7 +574,7 @@ export default function DashboardPage() {
             </div>
           )}
 
-          <button 
+          <button
             onClick={() => totalCredits > 0 ? router.push('/book') : router.push('/packages')}
             disabled={totalCredits === 0}
             className={`px-6 py-3 font-semibold rounded-lg transition ${
