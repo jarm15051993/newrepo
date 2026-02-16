@@ -26,6 +26,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Block login if account has not been activated
+    if (!user.activatedAt) {
+      return NextResponse.json(
+        { error: 'not_activated', message: 'Please activate your account first. Check your email for the activation link.' },
+        { status: 403 }
+      )
+    }
+
     // Check password
     const passwordMatch = await bcrypt.compare(password, user.password)
 

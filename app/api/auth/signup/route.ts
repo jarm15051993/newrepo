@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import { sendEmail } from '@/lib/email'
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,6 +44,9 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10)
 
+    // Generate activation token
+    const activationToken = crypto.randomUUID()
+
     // Create user
     const user = await prisma.user.create({
       data: {
@@ -52,9 +56,19 @@ export async function POST(request: NextRequest) {
         lastName,
         phone,
         birthday: new Date(birthday),
-        additionalInfo: additionalInfo || null
+        additionalInfo: additionalInfo || null,
+        activationToken,
       }
     })
+
+    // Send activation email (fire-and-forget — don't block signup response)
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    sendEmail({
+      to: user.email,
+      type: 'activation',
+      userId: user.id,
+      vars: { name: user.name, link: `${appUrl}/activate?token=${activationToken}` },
+    }).catch(e => console.error('[signup] Failed to send activation email:', e))
 
     return NextResponse.json(
       { message: 'User created successfully', userId: user.id },

@@ -130,42 +130,7 @@ export default function SignupPage() {
         return
       }
 
-      // Show success message
-      toast.success('Account created successfully!', {
-        duration: 2000,
-        style: {
-          background: '#1a1a1a',
-          color: '#fbbf24',
-          border: '1px solid #22c55e',
-        },
-      })
-
-      // Auto-login: fetch the newly created user and save to localStorage
-      const loginResponse = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password
-        })
-      })
-
-      const loginData = await loginResponse.json()
-
-      if (loginResponse.ok) {
-        // Save user to localStorage
-        localStorage.setItem('user', JSON.stringify(loginData.user))
-        
-        // Redirect to dashboard
-        setTimeout(() => {
-          router.push('/dashboard')
-        }, 1000)
-      } else {
-        // If auto-login fails, redirect to login page
-        setTimeout(() => {
-          router.push('/login')
-        }, 1000)
-      }
+      router.push('/signup/success')
     } catch (err) {
       toast.error('Network error. Please try again.', {
         duration: 4000,
