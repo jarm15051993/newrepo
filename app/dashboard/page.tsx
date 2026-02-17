@@ -492,22 +492,6 @@ export default function DashboardPage() {
               }
             />
 
-            <div className="md:col-span-2">
-              <FieldRow
-                field="additionalInfo"
-                label="Additional Info"
-                display={user.additionalInfo || <span className="text-gray-600 italic">—</span>}
-                editContent={
-                  <textarea
-                    value={editValue}
-                    onChange={e => setEditValue(e.target.value)}
-                    rows={3}
-                    className={`${inputClass} w-full resize-none`}
-                    autoFocus
-                  />
-                }
-              />
-            </div>
           </div>
         </div>
 

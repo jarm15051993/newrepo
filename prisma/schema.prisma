@@ -11,15 +11,17 @@ datasource db {
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
-  password  String
-  name      String
-  lastName  String
-  phone     String   @unique
-  birthday  DateTime
-  additionalInfo  String?
-  profilePicture  String?
-  activationToken String?  @unique
-  activatedAt     DateTime?
+  password  String?
+  name      String?
+  lastName  String?
+  phone     String?  @unique
+  birthday  DateTime?
+  goals               String?
+  additionalInfo      String?
+  profilePicture      String?
+  activationToken     String?  @unique
+  activatedAt         DateTime?
+  onboardingCompleted Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

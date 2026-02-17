@@ -16,6 +16,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [loginFailed, setLoginFailed] = useState(false)
   const [notActivated, setNotActivated] = useState(false)
+  const [onboardingIncomplete, setOnboardingIncomplete] = useState<string | null>(null)
   const [resendLoading, setResendLoading] = useState(false)
   const [resendSent, setResendSent] = useState(false)
 
@@ -29,6 +30,7 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     setNotActivated(false)
+    setOnboardingIncomplete(null)
     setResendSent(false)
 
     try {
@@ -44,9 +46,16 @@ export default function LoginPage() {
         if (data.error === 'not_activated') {
           setNotActivated(true)
           setLoginFailed(false)
+          setOnboardingIncomplete(null)
+        } else if (data.error === 'onboarding_incomplete') {
+          setOnboardingIncomplete(data.userId)
+          setNotActivated(false)
+          setLoginFailed(false)
         } else {
           toast.error(data.error || 'Invalid credentials', { duration: 4000, style: toastStyle('#ef4444') })
           setLoginFailed(true)
+          setNotActivated(false)
+          setOnboardingIncomplete(null)
         }
         setLoading(false)
         return
@@ -168,6 +177,22 @@ export default function LoginPage() {
                   {resendLoading ? 'Sending…' : 'Resend activation email'}
                 </button>
               )}
+            </div>
+          )}
+
+          {/* Onboarding not complete banner */}
+          {onboardingIncomplete && (
+            <div className="bg-amber-400/10 border border-amber-400/30 rounded-lg px-4 py-3 space-y-2">
+              <p className="text-amber-400 text-sm font-medium">Profile setup incomplete</p>
+              <p className="text-gray-400 text-xs">
+                You haven&apos;t finished setting up your profile yet.
+              </p>
+              <a
+                href={`/onboarding?userId=${onboardingIncomplete}`}
+                className="text-xs text-amber-400 hover:underline"
+              >
+                Complete your profile setup →
+              </a>
             </div>
           )}
 

@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       to: user.email,
       type: 'password_reset',
       userId: user.id,
-      vars: { name: user.name, link },
+      vars: { name: user.name ?? user.email, link },
       metadata: { resetToken: token },
     })
 
