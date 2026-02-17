@@ -13,13 +13,14 @@ function applyPlaceholders(template: string, vars: Record<string, string>): stri
 
 interface SendEmailOptions {
   to: string
-  type: 'activation' | 'password_reset' | 'booking_confirmation'
+  type: 'activation' | 'password_reset' | 'booking_confirmation' | 'booking_cancellation'
   userId?: string
   vars: Record<string, string>
   metadata?: Record<string, unknown>
+  attachments?: Array<{ filename: string; content: Buffer }>
 }
 
-export async function sendEmail({ to, type, userId, vars, metadata }: SendEmailOptions) {
+export async function sendEmail({ to, type, userId, vars, metadata, attachments }: SendEmailOptions) {
   // Fetch template from DB
   const template = await prisma.emailTemplate.findUnique({ where: { type } })
   if (!template) {
@@ -32,7 +33,7 @@ export async function sendEmail({ to, type, userId, vars, metadata }: SendEmailO
 
   let status = 'sent'
   try {
-    const result = await resend.emails.send({ from: FROM, to, subject, html })
+    const result = await resend.emails.send({ from: FROM, to, subject, html, attachments })
     if ('error' in result && result.error) {
       console.error(`[email] Resend error sending ${type} to ${to}:`, result.error)
       status = 'failed'

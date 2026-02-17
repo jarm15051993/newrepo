@@ -15,7 +15,11 @@ export async function GET(request: NextRequest) {
   }
 
   if (user.activatedAt) {
-    return NextResponse.json({ message: 'Account already activated' }, { status: 200 })
+    // Already activated — direct to onboarding if not completed, else login
+    if (!user.onboardingCompleted) {
+      return NextResponse.json({ message: 'Account already activated', userId: user.id }, { status: 200 })
+    }
+    return NextResponse.json({ message: 'Account already activated', onboardingCompleted: true }, { status: 200 })
   }
 
   await prisma.user.update({
@@ -23,5 +27,5 @@ export async function GET(request: NextRequest) {
     data: { activatedAt: new Date(), activationToken: null },
   })
 
-  return NextResponse.json({ message: 'Account activated successfully' }, { status: 200 })
+  return NextResponse.json({ message: 'Account activated successfully', userId: user.id }, { status: 200 })
 }

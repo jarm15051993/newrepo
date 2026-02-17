@@ -48,19 +48,14 @@ function CheckoutSuccessContent() {
   useEffect(() => {
     if (status !== 'success') return
 
-    const interval = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          clearInterval(interval)
-          router.push('/dashboard')
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
+    if (countdown <= 0) {
+      router.push('/dashboard')
+      return
+    }
 
-    return () => clearInterval(interval)
-  }, [status, router])
+    const timer = setTimeout(() => setCountdown(prev => prev - 1), 1000)
+    return () => clearTimeout(timer)
+  }, [status, countdown, router])
 
   if (status === 'verifying') {
     return (

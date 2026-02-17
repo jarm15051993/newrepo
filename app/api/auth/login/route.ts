@@ -34,8 +34,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check password
-    const passwordMatch = await bcrypt.compare(password, user.password)
+    // Block login if onboarding is not complete
+    if (!user.onboardingCompleted) {
+      return NextResponse.json(
+        { error: 'onboarding_incomplete', userId: user.id },
+        { status: 403 }
+      )
+    }
+
+    // Check password (password is guaranteed non-null after onboarding)
+    const passwordMatch = await bcrypt.compare(password, user.password!)
 
     if (!passwordMatch) {
       return NextResponse.json(

@@ -100,13 +100,52 @@ const templates = [
 </div>
 `.trim(),
   },
+  {
+    type: 'booking_cancellation',
+    subject: 'Booking cancelled: {{classTitle}}',
+    htmlBody: `
+<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #000; color: #fff; padding: 40px; border-radius: 12px;">
+  <h1 style="color: #fbbf24; text-align: center; margin-bottom: 8px;">OOMA Wellness Club</h1>
+  <p style="color: #9ca3af; text-align: center; margin-bottom: 32px;">Booking Cancelled</p>
+
+  <p style="color: #fff; font-size: 16px;">Hi {{name}},</p>
+  <p style="color: #d1d5db; font-size: 16px; line-height: 1.6;">
+    Your booking has been cancelled and your credit has been reinstated. Here are the details of the cancelled class:
+  </p>
+
+  <div style="background: #111827; border: 1px solid #374151; border-radius: 8px; padding: 24px; margin: 24px 0;">
+    <table style="width: 100%; border-collapse: collapse;">
+      <tr>
+        <td style="color: #9ca3af; font-size: 14px; padding: 6px 0;">Class</td>
+        <td style="color: #fbbf24; font-size: 14px; font-weight: 700; text-align: right;">{{classTitle}}</td>
+      </tr>
+      <tr>
+        <td style="color: #9ca3af; font-size: 14px; padding: 6px 0;">Date</td>
+        <td style="color: #fff; font-size: 14px; text-align: right;">{{date}}</td>
+      </tr>
+      <tr>
+        <td style="color: #9ca3af; font-size: 14px; padding: 6px 0;">Time</td>
+        <td style="color: #fff; font-size: 14px; text-align: right;">{{time}}</td>
+      </tr>
+    </table>
+  </div>
+
+  <p style="color: #d1d5db; font-size: 14px; text-align: center;">
+    Your credit has been returned to your account and is ready to use for another class.
+  </p>
+  <p style="color: #6b7280; font-size: 13px; text-align: center;">
+    We hope to see you back soon!
+  </p>
+</div>
+`.trim(),
+  },
 ]
 
 async function main() {
   for (const template of templates) {
     await prisma.emailTemplate.upsert({
       where: { type: template.type },
-      update: {},
+      update: { subject: template.subject, htmlBody: template.htmlBody },
       create: template,
     })
     console.log(`Seeded template: ${template.type}`)

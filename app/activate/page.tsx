@@ -24,10 +24,18 @@ function ActivateContent() {
         if (data.error) {
           setStatus('error')
           setMessage(data.error)
-        } else {
+        } else if (data.onboardingCompleted) {
+          // Already fully set up — go to login
+          setStatus('success')
+          setMessage('Account already activated. Redirecting to login…')
+          setTimeout(() => router.push('/login'), 2000)
+        } else if (data.userId) {
           setStatus('success')
           setMessage(data.message || 'Account activated successfully!')
-          setTimeout(() => router.push('/dashboard'), 2500)
+          setTimeout(() => router.push(`/onboarding?userId=${data.userId}`), 1500)
+        } else {
+          setStatus('error')
+          setMessage('Something went wrong. Please try again.')
         }
       })
       .catch(() => {
@@ -56,7 +64,7 @@ function ActivateContent() {
               </svg>
             </div>
             <p className="text-green-400 font-semibold text-lg">{message}</p>
-            <p className="text-gray-500 text-sm mt-2">Redirecting you to your dashboard…</p>
+            <p className="text-gray-500 text-sm mt-2">Just a moment…</p>
           </>
         )}
 
