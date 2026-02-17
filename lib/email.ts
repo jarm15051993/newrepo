@@ -1,7 +1,11 @@
 import { Resend } from 'resend'
 import { prisma } from '@/lib/prisma'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+let _resend: Resend | null = null
+function getResend(): Resend {
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY)
+  return _resend
+}
 const FROM = process.env.EMAIL_FROM || 'OOMA Wellness Club <noreply@oomawellness.com>'
 
 function applyPlaceholders(template: string, vars: Record<string, string>): string {
@@ -33,7 +37,7 @@ export async function sendEmail({ to, type, userId, vars, metadata, attachments 
 
   let status = 'sent'
   try {
-    const result = await resend.emails.send({ from: FROM, to, subject, html, attachments })
+    const result = await getResend().emails.send({ from: FROM, to, subject, html, attachments })
     if ('error' in result && result.error) {
       console.error(`[email] Resend error sending ${type} to ${to}:`, result.error)
       status = 'failed'
