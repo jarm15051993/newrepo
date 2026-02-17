@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
           userId,
           vars: { name: user.name ?? user.email, classTitle: cls.title, date, time, reformerNumber: String(result.stretcherNumber) },
           metadata: { bookingId: result.id, classId },
-          attachments: [{ filename: 'class-invite.ics', content: Buffer.from(icsContent) }],
+          attachments: [{ filename: 'class-invite.ics', content: Buffer.from(icsContent), contentType: 'text/calendar; method=REQUEST' }],
         })
       })
       .catch(e => console.error('[book] Failed to send confirmation email:', e))

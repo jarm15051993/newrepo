@@ -21,7 +21,7 @@ interface SendEmailOptions {
   userId?: string
   vars: Record<string, string>
   metadata?: Record<string, unknown>
-  attachments?: Array<{ filename: string; content: Buffer }>
+  attachments?: Array<{ filename: string; content: Buffer; contentType?: string }>
 }
 
 export async function sendEmail({ to, type, userId, vars, metadata, attachments }: SendEmailOptions) {
