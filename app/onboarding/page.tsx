@@ -11,6 +11,50 @@ const toastStyle = (border: string) => ({
   border: `1px solid ${border}`,
 })
 
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
+const MIN_YEAR = 1940
+const MAX_YEAR = new Date().getFullYear()
+
+function daysInMonth(month: number, year: number) {
+  if (!month || !year) return 31
+  return new Date(year, month, 0).getDate()
+}
+
+function BirthdayPicker({ value, onChange, className }: { value: string; onChange: (v: string) => void; className: string }) {
+  const parts = value ? value.split('-') : ['', '', '']
+  const [year, setYear] = useState(parts[0] || '')
+  const [month, setMonth] = useState(parts[1] ? String(parseInt(parts[1])) : '')
+  const [day, setDay] = useState(parts[2] ? String(parseInt(parts[2])) : '')
+
+  const maxDay = daysInMonth(parseInt(month), parseInt(year))
+
+  const update = (y: string, m: string, d: string) => {
+    setYear(y); setMonth(m); setDay(d)
+    if (y && m && d) {
+      onChange(`${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`)
+    }
+  }
+
+  const selectClass = `${className} appearance-none`
+
+  return (
+    <div className="flex gap-2">
+      <select value={month} onChange={e => update(year, e.target.value, day)} className={selectClass}>
+        <option value="">Month</option>
+        {MONTHS.map((m, i) => <option key={m} value={String(i + 1)}>{m}</option>)}
+      </select>
+      <select value={day} onChange={e => update(year, month, e.target.value)} className={selectClass}>
+        <option value="">Day</option>
+        {Array.from({ length: maxDay }, (_, i) => i + 1).map(d => <option key={d} value={String(d)}>{d}</option>)}
+      </select>
+      <select value={year} onChange={e => update(e.target.value, month, day)} className={selectClass}>
+        <option value="">Year</option>
+        {Array.from({ length: MAX_YEAR - MIN_YEAR + 1 }, (_, i) => MAX_YEAR - i).map(y => <option key={y} value={String(y)}>{y}</option>)}
+      </select>
+    </div>
+  )
+}
+
 interface FormState {
   password: string
   confirmPassword: string
@@ -339,10 +383,9 @@ function OnboardingContent() {
             <>
               <div>
                 <label className="block text-sm font-medium text-white mb-1">Birthday *</label>
-                <input
-                  type="date"
+                <BirthdayPicker
                   value={form.birthday}
-                  onChange={e => set('birthday', e.target.value)}
+                  onChange={v => set('birthday', v)}
                   className={inputClass()}
                 />
               </div>
