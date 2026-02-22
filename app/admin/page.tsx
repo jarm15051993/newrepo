@@ -53,7 +53,7 @@ const defaultForm = {
 }
 
 const toastOpts = (border: string) => ({
-  style: { background: '#1a1a1a', color: '#fbbf24', border: `1px solid ${border}` }
+  style: { background: '#FAFAF7', color: '#1A1512', border: `1px solid ${border}` }
 })
 
 export default function AdminPage() {
@@ -156,35 +156,38 @@ export default function AdminPage() {
   const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
   const minutes = ['00', '15', '30', '45']
 
+  const inputClass = 'w-full bg-warm-white border border-rule rounded-lg px-4 py-3 text-ink placeholder-lgray focus:outline-none focus:border-burg'
+  const selectClass = 'flex-1 bg-warm-white border border-rule rounded-lg px-3 py-3 text-ink focus:outline-none focus:border-burg'
+
   return (
-    <div className="min-h-screen bg-black p-8">
+    <div className="min-h-screen bg-cream p-8">
       <Toaster position="top-center" />
 
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-amber-400">Admin Panel</h1>
-            <p className="text-gray-400 mt-1">OOMA Wellness Club</p>
+            <h1 className="text-4xl font-serif font-light text-burg tracking-wide">Admin <em>Panel</em></h1>
+            <p className="text-mgray mt-1 text-sm tracking-wider uppercase">OOMA Wellness Club</p>
           </div>
           <button
             onClick={handleLogout}
-            className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition text-sm"
+            className="px-4 py-2 bg-bone hover:bg-bone-dk text-ink rounded-lg transition text-sm tracking-wide"
           >
             Sign Out
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-gray-900 p-1 rounded-xl border border-gray-800 mb-8 w-fit">
+        <div className="flex gap-1 bg-warm-white p-1 rounded-xl border border-rule mb-8 w-fit">
           {(['classes', 'customers'] as const).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`px-6 py-2 rounded-lg text-sm font-semibold transition capitalize ${
+              className={`px-6 py-2 rounded-lg text-sm font-medium transition capitalize tracking-wider ${
                 tab === t
-                  ? 'bg-amber-400 text-black'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-ink text-warm-white'
+                  : 'text-mgray hover:text-ink'
               }`}
             >
               {t}
@@ -196,93 +199,89 @@ export default function AdminPage() {
         {tab === 'classes' && (
           <>
             {/* Create Class Form */}
-            <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800 mb-10">
-              <h2 className="text-2xl font-bold text-amber-400 mb-6">Create New Class</h2>
+            <div className="bg-warm-white rounded-2xl p-8 border border-rule mb-10">
+              <h2 className="text-2xl font-serif font-light text-burg mb-6 tracking-wide">Create New Class</h2>
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-400 mb-1">Class Title <span className="text-red-400">*</span></label>
+                    <label className="block text-sm font-medium text-mgray mb-1 tracking-wide">Class Title <span className="text-burg">*</span></label>
                     <input type="text" name="title" value={form.title} onChange={handleChange} required placeholder="e.g. Morning Flow"
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-amber-400" />
+                      className={inputClass} />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-400 mb-1">Description</label>
+                    <label className="block text-sm font-medium text-mgray mb-1 tracking-wide">Description</label>
                     <textarea name="description" value={form.description} onChange={handleChange} rows={2} placeholder="Optional class description"
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-amber-400 resize-none" />
+                      className="w-full bg-warm-white border border-rule rounded-lg px-4 py-3 text-ink placeholder-lgray focus:outline-none focus:border-burg resize-none" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-400 mb-1">Date <span className="text-red-400">*</span></label>
+                    <label className="block text-sm font-medium text-mgray mb-1 tracking-wide">Date <span className="text-burg">*</span></label>
                     <input type="date" name="date" value={form.date} onChange={handleChange} required min={new Date().toISOString().split('T')[0]}
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-amber-400 [color-scheme:dark]" />
+                      className="w-full bg-warm-white border border-rule rounded-lg px-4 py-3 text-ink focus:outline-none focus:border-burg [color-scheme:light]" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-400 mb-1">Instructor</label>
+                    <label className="block text-sm font-medium text-mgray mb-1 tracking-wide">Instructor</label>
                     <input type="text" name="instructor" value={form.instructor} onChange={handleChange} placeholder="e.g. Sarah Martinez"
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-amber-400" />
+                      className={inputClass} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-400 mb-1">Start Time <span className="text-red-400">*</span></label>
+                    <label className="block text-sm font-medium text-mgray mb-1 tracking-wide">Start Time <span className="text-burg">*</span></label>
                     <div className="flex gap-2">
-                      <select name="startHour" value={form.startHour} onChange={handleChange}
-                        className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-3 text-white focus:outline-none focus:border-amber-400">
+                      <select name="startHour" value={form.startHour} onChange={handleChange} className={selectClass}>
                         {hours.map(h => <option key={h} value={h}>{h}</option>)}
                       </select>
-                      <span className="text-white self-center font-bold">:</span>
-                      <select name="startMinute" value={form.startMinute} onChange={handleChange}
-                        className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-3 text-white focus:outline-none focus:border-amber-400">
+                      <span className="text-ink self-center font-medium">:</span>
+                      <select name="startMinute" value={form.startMinute} onChange={handleChange} className={selectClass}>
                         {minutes.map(m => <option key={m} value={m}>{m}</option>)}
                       </select>
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-400 mb-1">End Time <span className="text-red-400">*</span></label>
+                    <label className="block text-sm font-medium text-mgray mb-1 tracking-wide">End Time <span className="text-burg">*</span></label>
                     <div className="flex gap-2">
-                      <select name="endHour" value={form.endHour} onChange={handleChange}
-                        className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-3 text-white focus:outline-none focus:border-amber-400">
+                      <select name="endHour" value={form.endHour} onChange={handleChange} className={selectClass}>
                         {hours.map(h => <option key={h} value={h}>{h}</option>)}
                       </select>
-                      <span className="text-white self-center font-bold">:</span>
-                      <select name="endMinute" value={form.endMinute} onChange={handleChange}
-                        className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-3 text-white focus:outline-none focus:border-amber-400">
+                      <span className="text-ink self-center font-medium">:</span>
+                      <select name="endMinute" value={form.endMinute} onChange={handleChange} className={selectClass}>
                         {minutes.map(m => <option key={m} value={m}>{m}</option>)}
                       </select>
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-400 mb-1">Capacity <span className="text-red-400">*</span></label>
+                    <label className="block text-sm font-medium text-mgray mb-1 tracking-wide">Capacity <span className="text-burg">*</span></label>
                     <input type="number" name="capacity" value={form.capacity} onChange={handleChange} required min="1" max="20"
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-amber-400" />
+                      className={inputClass} />
                   </div>
                 </div>
                 <button type="submit" disabled={submitting}
-                  className={`w-full py-3 rounded-lg font-semibold transition ${submitting ? 'bg-amber-600 text-white cursor-not-allowed' : 'bg-amber-400 hover:bg-amber-500 text-black'}`}>
+                  className={`w-full py-3 rounded-lg font-medium transition tracking-wider text-sm uppercase ${submitting ? 'bg-bone text-lgray cursor-not-allowed' : 'bg-ink hover:bg-burg text-warm-white'}`}>
                   {submitting ? 'Creating...' : 'Create Class'}
                 </button>
               </form>
             </div>
 
             {/* Class Roster */}
-            <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800">
-              <h2 className="text-2xl font-bold text-amber-400 mb-6">Upcoming Classes</h2>
+            <div className="bg-warm-white rounded-2xl p-8 border border-rule">
+              <h2 className="text-2xl font-serif font-light text-burg mb-6 tracking-wide">Upcoming Classes</h2>
               {classesLoading ? (
-                <p className="text-gray-400">Loading...</p>
+                <p className="text-mgray text-sm">Loading...</p>
               ) : classes.length === 0 ? (
-                <p className="text-gray-400">No upcoming classes. Create one above.</p>
+                <p className="text-mgray text-sm">No upcoming classes. Create one above.</p>
               ) : (
                 <div className="space-y-4">
                   {classes.map((cls) => {
                     const isExpanded = expandedClass === cls.id
                     const spotsLeft = cls.capacity - cls.bookedCount
                     return (
-                      <div key={cls.id} className="border border-gray-700 rounded-xl overflow-hidden">
+                      <div key={cls.id} className="border border-rule rounded-xl overflow-hidden">
                         <button
                           onClick={() => setExpandedClass(isExpanded ? null : cls.id)}
-                          className="w-full flex items-center justify-between p-5 bg-gray-800 hover:bg-gray-750 text-left transition"
+                          className="w-full flex items-center justify-between p-5 bg-bone hover:bg-bone-dk text-left transition"
                         >
                           <div className="flex items-center gap-4 flex-1 min-w-0">
                             <div className="min-w-0">
-                              <p className="text-white font-semibold truncate">{cls.title}</p>
-                              <p className="text-gray-400 text-sm">
+                              <p className="text-ink font-medium truncate tracking-wide">{cls.title}</p>
+                              <p className="text-mgray text-sm">
                                 {new Date(cls.startTime).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                                 {' · '}
                                 {new Date(cls.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
@@ -293,33 +292,33 @@ export default function AdminPage() {
                             </div>
                           </div>
                           <div className="flex items-center gap-3 ml-4 shrink-0">
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${cls.bookedCount >= cls.capacity ? 'bg-red-900/20 text-red-400 border border-red-500' : 'bg-green-900/20 text-green-400 border border-green-500'}`}>
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${cls.bookedCount >= cls.capacity ? 'bg-red-50 text-red-600 border border-red-300' : 'bg-green-50 text-green-700 border border-green-300'}`}>
                               {cls.bookedCount}/{cls.capacity} booked
                             </span>
-                            <svg className={`w-5 h-5 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className={`w-5 h-5 text-mgray transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                             </svg>
                           </div>
                         </button>
                         {isExpanded && (
-                          <div className="p-5 border-t border-gray-700">
+                          <div className="p-5 border-t border-rule bg-warm-white">
                             {cls.bookings.length === 0 ? (
-                              <p className="text-gray-500 text-sm">No users booked yet.</p>
+                              <p className="text-lgray text-sm">No users booked yet.</p>
                             ) : (
                               <div>
-                                <p className="text-gray-400 text-xs uppercase tracking-wider mb-3">
+                                <p className="text-mgray text-xs uppercase tracking-wider mb-3">
                                   Booked users — {spotsLeft} {spotsLeft === 1 ? 'spot' : 'spots'} remaining
                                 </p>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                   {cls.bookings.map((booking) => (
-                                    <div key={booking.id} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
-                                      <div className="w-9 h-9 rounded-full bg-amber-400 flex items-center justify-center text-black font-bold text-sm shrink-0">
+                                    <div key={booking.id} className="flex items-center gap-3 bg-bone rounded-lg p-3">
+                                      <div className="w-9 h-9 rounded-full bg-burg flex items-center justify-center text-warm-white font-medium text-sm shrink-0">
                                         #{booking.stretcherNumber}
                                       </div>
                                       <div className="min-w-0">
-                                        <p className="text-white font-medium text-sm truncate">{booking.user.name} {booking.user.lastName}</p>
-                                        <p className="text-gray-400 text-xs truncate">{booking.user.email}</p>
-                                        <p className="text-gray-500 text-xs">{booking.user.phone}</p>
+                                        <p className="text-ink font-medium text-sm truncate">{booking.user.name} {booking.user.lastName}</p>
+                                        <p className="text-mgray text-xs truncate">{booking.user.email}</p>
+                                        <p className="text-lgray text-xs">{booking.user.phone}</p>
                                       </div>
                                     </div>
                                   ))}
@@ -328,12 +327,12 @@ export default function AdminPage() {
                             )}
                             {spotsLeft > 0 && (
                               <div className="mt-4">
-                                <p className="text-gray-600 text-xs uppercase tracking-wider mb-2">Available reformers</p>
+                                <p className="text-lgray text-xs uppercase tracking-wider mb-2">Available reformers</p>
                                 <div className="flex flex-wrap gap-2">
                                   {Array.from({ length: cls.capacity }, (_, i) => i + 1)
                                     .filter(n => !cls.bookings.some(b => b.stretcherNumber === n))
                                     .map(n => (
-                                      <span key={n} className="w-9 h-9 rounded-full border border-gray-700 flex items-center justify-center text-gray-600 text-sm">
+                                      <span key={n} className="w-9 h-9 rounded-full border border-rule flex items-center justify-center text-lgray text-sm">
                                         #{n}
                                       </span>
                                     ))}
@@ -353,11 +352,11 @@ export default function AdminPage() {
 
         {/* ── Customers Tab ────────────────────────────────────────────────────── */}
         {tab === 'customers' && (
-          <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800">
+          <div className="bg-warm-white rounded-2xl p-8 border border-rule">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-              <h2 className="text-2xl font-bold text-amber-400">Customers</h2>
+              <h2 className="text-2xl font-serif font-light text-burg tracking-wide">Customers</h2>
               <div className="relative w-full sm:w-80">
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-lgray" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 <input
@@ -365,44 +364,44 @@ export default function AdminPage() {
                   placeholder="Search by name, email, or phone…"
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-black border border-gray-700 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-amber-400 text-sm"
+                  className="w-full pl-9 pr-4 py-2 bg-warm-white border border-rule rounded-lg text-ink placeholder-lgray focus:outline-none focus:border-burg text-sm"
                 />
               </div>
             </div>
 
             {customersLoading ? (
-              <p className="text-gray-400">Loading...</p>
+              <p className="text-mgray text-sm">Loading...</p>
             ) : customers.length === 0 ? (
-              <p className="text-gray-500">{search ? 'No customers match your search.' : 'No customers found.'}</p>
+              <p className="text-lgray text-sm">{search ? 'No customers match your search.' : 'No customers found.'}</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-800">
+                    <tr className="border-b border-rule">
                       {['Name', 'Last Name', 'Phone', 'Email', 'Available Classes', 'All-Time Purchases', 'Total Value', 'Last Purchase'].map(h => (
-                        <th key={h} className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider pb-3 pr-4 whitespace-nowrap">
+                        <th key={h} className="text-left text-xs font-medium text-mgray uppercase tracking-wider pb-3 pr-4 whitespace-nowrap">
                           {h}
                         </th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-800">
+                  <tbody className="divide-y divide-rule">
                     {customers.map(c => (
-                      <tr key={c.id} className="hover:bg-gray-800/50 transition">
-                        <td className="py-3 pr-4 text-white font-medium">{c.name ?? '—'}</td>
-                        <td className="py-3 pr-4 text-white">{c.lastName ?? '—'}</td>
-                        <td className="py-3 pr-4 text-gray-300 whitespace-nowrap">{c.phone ?? '—'}</td>
-                        <td className="py-3 pr-4 text-gray-300">{c.email}</td>
+                      <tr key={c.id} className="hover:bg-bone/50 transition">
+                        <td className="py-3 pr-4 text-ink font-medium">{c.name ?? '—'}</td>
+                        <td className="py-3 pr-4 text-ink">{c.lastName ?? '—'}</td>
+                        <td className="py-3 pr-4 text-mgray whitespace-nowrap">{c.phone ?? '—'}</td>
+                        <td className="py-3 pr-4 text-mgray">{c.email}</td>
                         <td className="py-3 pr-4">
-                          <span className={`font-semibold ${c.availableClasses > 0 ? 'text-amber-400' : 'text-gray-500'}`}>
+                          <span className={`font-medium ${c.availableClasses > 0 ? 'text-burg' : 'text-lgray'}`}>
                             {c.availableClasses}
                           </span>
                         </td>
-                        <td className="py-3 pr-4 text-gray-300">{c.allTimePurchases}</td>
-                        <td className="py-3 pr-4 text-gray-300">
-                          {c.totalValue > 0 ? `$${c.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
+                        <td className="py-3 pr-4 text-mgray">{c.allTimePurchases}</td>
+                        <td className="py-3 pr-4 text-mgray">
+                          {c.totalValue > 0 ? `€${c.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
                         </td>
-                        <td className="py-3 pr-4 text-gray-400 whitespace-nowrap">
+                        <td className="py-3 pr-4 text-lgray whitespace-nowrap">
                           {c.lastPurchase
                             ? new Date(c.lastPurchase).toLocaleString('en-US', {
                                 month: 'short', day: 'numeric', year: 'numeric',
@@ -414,7 +413,7 @@ export default function AdminPage() {
                     ))}
                   </tbody>
                 </table>
-                <p className="text-gray-600 text-xs mt-4">{customers.length} customer{customers.length !== 1 ? 's' : ''}</p>
+                <p className="text-lgray text-xs mt-4">{customers.length} customer{customers.length !== 1 ? 's' : ''}</p>
               </div>
             )}
           </div>

@@ -44,7 +44,6 @@ function CheckoutSuccessContent() {
     verifyPayment()
   }, [sessionId, router])
 
-  // Countdown + redirect once verified
   useEffect(() => {
     if (status !== 'success') return
 
@@ -59,11 +58,11 @@ function CheckoutSuccessContent() {
 
   if (status === 'verifying') {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-4">
-        <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800 text-center max-w-md">
-          <div className="text-4xl mb-4">⏳</div>
-          <h1 className="text-2xl font-bold text-amber-400 mb-4">Verifying Payment...</h1>
-          <p className="text-gray-400">Please wait while we confirm your purchase.</p>
+      <div className="min-h-screen bg-cream flex items-center justify-center p-4">
+        <div className="bg-warm-white rounded-2xl p-8 border border-rule text-center max-w-md shadow-sm">
+          <div className="w-10 h-10 border-4 border-burg border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <h1 className="text-2xl font-serif font-light text-burg mb-4 tracking-wide">Verifying Payment…</h1>
+          <p className="text-mgray text-sm">Please wait while we confirm your purchase.</p>
         </div>
       </div>
     )
@@ -71,16 +70,20 @@ function CheckoutSuccessContent() {
 
   if (status === 'error') {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-4">
-        <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800 text-center max-w-md">
-          <div className="text-4xl mb-4">⚠️</div>
-          <h1 className="text-2xl font-bold text-amber-400 mb-4">Verification Issue</h1>
-          <p className="text-gray-400 mb-6">
-            Your payment may have completed but we couldn't confirm it automatically. Your credits will appear in your dashboard shortly.
+      <div className="min-h-screen bg-cream flex items-center justify-center p-4">
+        <div className="bg-warm-white rounded-2xl p-8 border border-rule text-center max-w-md shadow-sm">
+          <div className="w-14 h-14 bg-burg-pale/20 border border-burg-pale rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-7 h-7 text-burg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-serif font-light text-burg mb-4 tracking-wide">Verification Issue</h1>
+          <p className="text-mgray mb-6 text-sm leading-relaxed">
+            Your payment may have completed but we couldn&apos;t confirm it automatically. Your credits will appear in your dashboard shortly.
           </p>
           <button
             onClick={() => router.push('/dashboard')}
-            className="px-6 py-3 bg-amber-400 hover:bg-amber-500 text-black font-semibold rounded-lg transition"
+            className="px-6 py-3 bg-ink hover:bg-burg text-warm-white font-medium rounded-lg transition tracking-wider text-sm uppercase"
           >
             Go to Dashboard
           </button>
@@ -90,21 +93,25 @@ function CheckoutSuccessContent() {
   }
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4">
-      <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800 text-center max-w-md">
-        <div className="text-6xl mb-4">✓</div>
-        <h1 className="text-3xl font-bold text-amber-400 mb-4">Payment Successful!</h1>
-        <p className="text-gray-300 mb-2">
-          <span className="text-amber-400 font-bold">{creditsAdded}</span>{' '}
+    <div className="min-h-screen bg-cream flex items-center justify-center p-4">
+      <div className="bg-warm-white rounded-2xl p-8 border border-rule text-center max-w-md shadow-sm">
+        <div className="w-14 h-14 bg-bone rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h1 className="text-3xl font-serif font-light text-burg mb-4 tracking-wide">Payment Successful</h1>
+        <p className="text-ink mb-2 text-sm">
+          <span className="text-burg font-medium text-lg">{creditsAdded}</span>{' '}
           {creditsAdded === 1 ? 'class credit has' : 'class credits have'} been added to your account.
         </p>
-        <p className="text-gray-400 text-sm mb-6">Your credits are valid for 6 months.</p>
-        <p className="text-gray-400 text-sm mb-6">
-          Redirecting to dashboard in {countdown} second{countdown !== 1 ? 's' : ''}...
+        <p className="text-mgray text-sm mb-6">Your credits are valid for 6 months.</p>
+        <p className="text-mgray text-sm mb-6">
+          Redirecting to dashboard in {countdown} second{countdown !== 1 ? 's' : ''}…
         </p>
         <button
           onClick={() => router.push('/dashboard')}
-          className="px-6 py-3 bg-amber-400 hover:bg-amber-500 text-black font-semibold rounded-lg transition"
+          className="px-6 py-3 bg-ink hover:bg-burg text-warm-white font-medium rounded-lg transition tracking-wider text-sm uppercase"
         >
           Go to Dashboard Now
         </button>
@@ -117,11 +124,8 @@ export default function CheckoutSuccess() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-black flex items-center justify-center p-4">
-          <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800 text-center max-w-md">
-            <div className="text-4xl mb-4">⏳</div>
-            <h1 className="text-2xl font-bold text-amber-400 mb-4">Loading...</h1>
-          </div>
+        <div className="min-h-screen bg-cream flex items-center justify-center p-4">
+          <div className="w-10 h-10 border-4 border-burg border-t-transparent rounded-full animate-spin" />
         </div>
       }
     >

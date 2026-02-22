@@ -6,8 +6,8 @@ import toast, { Toaster } from 'react-hot-toast'
 import { COUNTRY_CODES } from '@/lib/constants'
 
 const toastStyle = (border: string) => ({
-  background: '#1a1a1a',
-  color: '#fbbf24',
+  background: '#FAFAF7',
+  color: '#1A1512',
   border: `1px solid ${border}`,
 })
 
@@ -166,7 +166,6 @@ function OnboardingContent() {
       return
     }
 
-    // Phone step: check uniqueness before advancing
     if (step === 2) {
       const fullPhone = form.countryCode + form.phone
       try {
@@ -188,7 +187,6 @@ function OnboardingContent() {
       return
     }
 
-    // Final step — submit
     setLoading(true)
     try {
       const fullPhone = form.countryCode + form.phone
@@ -222,7 +220,7 @@ function OnboardingContent() {
   }
 
   const inputClass = (hasError = false) =>
-    `w-full px-4 py-2 bg-black border ${hasError ? 'border-red-500' : 'border-gray-700'} rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent text-amber-400 placeholder-gray-600`
+    `w-full px-4 py-2 bg-warm-white border ${hasError ? 'border-burg' : 'border-rule'} rounded-lg focus:ring-2 focus:ring-burg focus:border-transparent text-ink placeholder-lgray`
 
   const STEPS = [
     'Create your password',
@@ -235,36 +233,32 @@ function OnboardingContent() {
   if (!userId) return null
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black p-4">
+    <div className="min-h-screen flex items-center justify-center bg-cream p-4">
       <Toaster position="top-center" />
 
-      <div className="bg-black rounded-2xl shadow-xl p-8 w-full max-w-md border border-gray-800">
-        {/* Header */}
-        <h1 className="text-2xl font-bold text-center text-amber-400 mb-1">OOMA Wellness Club</h1>
+      <div className="bg-warm-white rounded-2xl shadow-sm p-8 w-full max-w-md border border-rule">
+        <h1 className="text-2xl font-serif font-light text-center text-burg mb-1 tracking-wide">OOMA Wellness Club</h1>
 
         {/* Progress dots */}
         <div className="flex justify-center gap-2 mt-4 mb-6">
           {STEPS.map((_, i) => (
             <div
               key={i}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                i === step ? 'w-6 bg-amber-400' : i < step ? 'w-2 bg-amber-400/60' : 'w-2 bg-gray-700'
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                i === step ? 'w-6 bg-burg' : i < step ? 'w-2 bg-burg/40' : 'w-2 bg-rule'
               }`}
             />
           ))}
         </div>
 
-        {/* Step title */}
-        <h2 className="text-xl font-semibold text-white mb-6 text-center">{STEPS[step]}</h2>
+        <h2 className="text-lg font-serif font-light text-ink mb-6 text-center tracking-wide">{STEPS[step]}</h2>
 
-        {/* Step content */}
         <div className="space-y-4">
 
-          {/* Step 0: Password */}
           {step === 0 && (
             <>
               <div>
-                <label className="block text-sm font-medium text-white mb-1">Password *</label>
+                <label className="block text-sm font-medium text-ink mb-1 tracking-wide">Password *</label>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
@@ -276,15 +270,15 @@ function OnboardingContent() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-amber-400 transition"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-lgray hover:text-burg transition"
                   >
                     <EyeIcon open={showPassword} />
                   </button>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">8+ characters, one capital, one special character</p>
+                <p className="text-xs text-mgray mt-1">8+ characters, one capital, one special character</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-white mb-1">Confirm Password *</label>
+                <label className="block text-sm font-medium text-ink mb-1 tracking-wide">Confirm Password *</label>
                 <div className="relative">
                   <input
                     type={showConfirmPassword ? 'text' : 'password'}
@@ -296,53 +290,39 @@ function OnboardingContent() {
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-amber-400 transition"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-lgray hover:text-burg transition"
                   >
                     <EyeIcon open={showConfirmPassword} />
                   </button>
                 </div>
                 {form.confirmPassword.length > 0 && form.password !== form.confirmPassword && (
-                  <p className="text-xs text-red-400 mt-1">Passwords do not match</p>
+                  <p className="text-xs text-burg mt-1">Passwords do not match</p>
                 )}
               </div>
             </>
           )}
 
-          {/* Step 1: Name */}
           {step === 1 && (
             <>
               <div>
-                <label className="block text-sm font-medium text-white mb-1">First Name *</label>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={e => set('name', e.target.value)}
-                  placeholder="Maria"
-                  className={inputClass()}
-                />
+                <label className="block text-sm font-medium text-ink mb-1 tracking-wide">First Name *</label>
+                <input type="text" value={form.name} onChange={e => set('name', e.target.value)} placeholder="Maria" className={inputClass()} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-white mb-1">Last Name *</label>
-                <input
-                  type="text"
-                  value={form.lastName}
-                  onChange={e => set('lastName', e.target.value)}
-                  placeholder="García"
-                  className={inputClass()}
-                />
+                <label className="block text-sm font-medium text-ink mb-1 tracking-wide">Last Name *</label>
+                <input type="text" value={form.lastName} onChange={e => set('lastName', e.target.value)} placeholder="García" className={inputClass()} />
               </div>
             </>
           )}
 
-          {/* Step 2: Phone */}
           {step === 2 && (
             <div>
-              <label className="block text-sm font-medium text-white mb-1">Phone Number *</label>
+              <label className="block text-sm font-medium text-ink mb-1 tracking-wide">Phone Number *</label>
               <div className="flex gap-2">
                 <select
                   value={form.countryCode}
                   onChange={e => set('countryCode', e.target.value)}
-                  className="px-3 py-2 bg-black border border-gray-700 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent text-amber-400 text-sm"
+                  className="px-3 py-2 bg-warm-white border border-rule rounded-lg focus:ring-2 focus:ring-burg focus:border-transparent text-ink text-sm"
                 >
                   {COUNTRY_CODES.map(c => (
                     <option key={c.code} value={c.code}>{c.label}</option>
@@ -358,60 +338,53 @@ function OnboardingContent() {
                 />
               </div>
               {phoneError
-                ? <p className="text-xs text-red-400 mt-1">{phoneError}</p>
-                : <p className="text-xs text-gray-500 mt-1">Digits only, no spaces or dashes</p>
+                ? <p className="text-xs text-burg mt-1">{phoneError}</p>
+                : <p className="text-xs text-mgray mt-1">Digits only, no spaces or dashes</p>
               }
             </div>
           )}
 
-          {/* Step 3: Goals */}
           {step === 3 && (
             <div>
-              <label className="block text-sm font-medium text-white mb-1">Your goal *</label>
+              <label className="block text-sm font-medium text-ink mb-1 tracking-wide">Your goal *</label>
               <textarea
                 value={form.goals}
                 onChange={e => set('goals', e.target.value)}
                 rows={4}
                 placeholder="e.g. Improve flexibility, lose weight, reduce stress…"
-                className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent text-amber-400 placeholder-gray-600 resize-none"
+                className="w-full px-4 py-2 bg-warm-white border border-rule rounded-lg focus:ring-2 focus:ring-burg focus:border-transparent text-ink placeholder-lgray resize-none"
               />
             </div>
           )}
 
-          {/* Step 4: Birthday + Health notes */}
           {step === 4 && (
             <>
               <div>
-                <label className="block text-sm font-medium text-white mb-1">Birthday *</label>
-                <BirthdayPicker
-                  value={form.birthday}
-                  onChange={v => set('birthday', v)}
-                  className={inputClass()}
-                />
+                <label className="block text-sm font-medium text-ink mb-1 tracking-wide">Birthday *</label>
+                <BirthdayPicker value={form.birthday} onChange={v => set('birthday', v)} className={inputClass()} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-white mb-1">
-                  Health notes <span className="text-gray-500">(optional)</span>
+                <label className="block text-sm font-medium text-ink mb-1 tracking-wide">
+                  Health notes <span className="text-mgray">(optional)</span>
                 </label>
                 <textarea
                   value={form.additionalInfo}
                   onChange={e => set('additionalInfo', e.target.value)}
                   rows={3}
                   placeholder="Injuries, pregnancy, medical conditions, allergies…"
-                  className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent text-amber-400 placeholder-gray-600 resize-none"
+                  className="w-full px-4 py-2 bg-warm-white border border-rule rounded-lg focus:ring-2 focus:ring-burg focus:border-transparent text-ink placeholder-lgray resize-none"
                 />
               </div>
             </>
           )}
         </div>
 
-        {/* Navigation */}
         <div className="flex gap-3 mt-8">
           {step > 0 && (
             <button
               type="button"
               onClick={() => setStep(s => s - 1)}
-              className="flex-1 py-3 border border-gray-700 text-gray-300 font-semibold rounded-lg hover:border-amber-400 hover:text-amber-400 transition"
+              className="flex-1 py-3 border border-rule text-mgray font-medium rounded-lg hover:border-burg hover:text-burg transition tracking-wider text-sm uppercase"
             >
               Back
             </button>
@@ -420,7 +393,7 @@ function OnboardingContent() {
             type="button"
             onClick={handleNext}
             disabled={loading}
-            className="flex-1 bg-amber-400 hover:bg-amber-500 text-black font-semibold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 bg-ink hover:bg-burg text-warm-white font-medium py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed tracking-wider text-sm uppercase"
           >
             {loading ? 'Saving…' : step === 4 ? "Let's go!" : 'Continue'}
           </button>
@@ -433,8 +406,8 @@ function OnboardingContent() {
 export default function OnboardingPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-black">
-        <div className="w-10 h-10 border-4 border-amber-400 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-cream">
+        <div className="w-10 h-10 border-4 border-burg border-t-transparent rounded-full animate-spin" />
       </div>
     }>
       <OnboardingContent />

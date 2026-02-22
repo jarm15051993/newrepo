@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation'
 import toast, { Toaster } from 'react-hot-toast'
 
 const toastStyle = (border: string) => ({
-  background: '#1a1a1a',
-  color: '#fbbf24',
+  background: '#FAFAF7',
+  color: '#1A1512',
   border: `1px solid ${border}`,
 })
 
@@ -38,37 +38,37 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black p-4">
+    <div className="min-h-screen flex items-center justify-center bg-cream p-4">
       <Toaster position="top-center" />
 
-      <div className="bg-black rounded-2xl shadow-xl p-8 w-full max-w-md border border-gray-800">
-        <h1 className="text-3xl font-bold text-center mb-2 text-amber-400">OOMA Wellness Club</h1>
-        <p className="text-center text-gray-400 mb-8">Create your account</p>
+      <div className="bg-warm-white rounded-2xl shadow-sm p-8 w-full max-w-md border border-rule">
+        <h1 className="text-3xl font-serif font-light text-center mb-2 text-burg tracking-wide">OOMA Wellness Club</h1>
+        <p className="text-center text-mgray mb-8 text-sm tracking-wider uppercase">Create your account</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-white mb-1">Email *</label>
+            <label className="block text-sm font-medium text-ink mb-1 tracking-wide">Email *</label>
             <input
               type="email"
               required
               value={email}
               onChange={e => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="w-full px-4 py-2 bg-black border border-gray-700 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent text-amber-400 placeholder-gray-600"
+              className="w-full px-4 py-2 bg-warm-white border border-rule rounded-lg focus:ring-2 focus:ring-burg focus:border-transparent text-ink placeholder-lgray"
             />
           </div>
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-amber-400 hover:bg-amber-500 text-black font-semibold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-ink hover:bg-burg text-warm-white font-medium py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed tracking-wider text-sm uppercase"
           >
             {loading ? 'Sending link…' : 'Continue'}
           </button>
         </form>
 
-        <p className="text-center text-gray-400 mt-4">
+        <p className="text-center text-mgray mt-4 text-sm">
           Already have an account?{' '}
-          <a href="/login" className="text-amber-400 hover:underline font-semibold">Log in</a>
+          <a href="/login" className="text-burg hover:underline font-medium">Log in</a>
         </p>
       </div>
     </div>

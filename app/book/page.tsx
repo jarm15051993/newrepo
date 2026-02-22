@@ -19,7 +19,7 @@ interface Class {
 }
 
 function getAvailabilityColor(cls: Class) {
-  if (cls.isBooked) return 'amber'
+  if (cls.isBooked) return 'burg'
   if (cls.isFull) return 'red'
   if (cls.availableSpots <= 2) return 'yellow'
   return 'green'
@@ -27,26 +27,24 @@ function getAvailabilityColor(cls: Class) {
 
 const dotColors: Record<string, string> = {
   red: 'bg-red-500',
-  yellow: 'bg-yellow-400',
+  yellow: 'bg-yellow-500',
   green: 'bg-green-500',
-  amber: 'bg-amber-400',
+  burg: 'bg-burg',
 }
 
-// Build a full month grid for display
 function buildCalendarGrid(year: number, month: number) {
   const firstDay = new Date(year, month, 1)
   const lastDay = new Date(year, month + 1, 0)
-  const startDow = firstDay.getDay() // 0=Sun
+  const startDow = firstDay.getDay()
   const daysInMonth = lastDay.getDate()
 
   const cells: Array<{ day: number; dateKey: string } | null> = []
 
-  // Leading blanks
   for (let i = 0; i < startDow; i++) cells.push(null)
 
   for (let d = 1; d <= daysInMonth; d++) {
     const dt = new Date(year, month, d)
-    const dateKey = dt.toLocaleDateString('en-CA') // YYYY-MM-DD
+    const dateKey = dt.toLocaleDateString('en-CA')
     cells.push({ day: d, dateKey })
   }
 
@@ -62,7 +60,6 @@ export default function BookClassPage() {
   const [processingClass, setProcessingClass] = useState<string | null>(null)
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
 
-  // Calendar month navigation
   const today = useMemo(() => new Date(), [])
   const todayKey = today.toLocaleDateString('en-CA')
   const [viewYear, setViewYear] = useState(today.getFullYear())
@@ -103,7 +100,6 @@ export default function BookClassPage() {
     init()
   }, [router])
 
-  // Group classes by date key
   const groupedByDay = useMemo(() => {
     const groups: Map<string, Class[]> = new Map()
     for (const cls of classes) {
@@ -114,7 +110,6 @@ export default function BookClassPage() {
     return groups
   }, [classes])
 
-  // Check if today has no remaining classes (all in the past)
   const todayHasNoMoreClasses = useMemo(() => {
     const todayClasses = groupedByDay.get(todayKey)
     if (!todayClasses) return true
@@ -147,19 +142,19 @@ export default function BookClassPage() {
       const data = await response.json()
       if (!response.ok) {
         toast.error(data.error || 'Booking failed', {
-          style: { background: '#1a1a1a', color: '#fbbf24', border: '1px solid #ef4444' },
+          style: { background: '#FAFAF7', color: '#1A1512', border: '1px solid #ef4444' },
         })
         return
       }
       toast.success(`Class booked! Your reformer is #${data.booking.stretcherNumber}`, {
         duration: 4000,
-        style: { background: '#1a1a1a', color: '#fbbf24', border: '1px solid #22c55e' },
+        style: { background: '#FAFAF7', color: '#1A1512', border: '1px solid #22c55e' },
       })
       setTotalCredits(c => Math.max(0, c - 1))
       await fetchClasses(user.id)
     } catch (error) {
       toast.error('Network error. Please try again.', {
-        style: { background: '#1a1a1a', color: '#fbbf24', border: '1px solid #ef4444' },
+        style: { background: '#FAFAF7', color: '#1A1512', border: '1px solid #ef4444' },
       })
     } finally {
       setProcessingClass(null)
@@ -177,19 +172,19 @@ export default function BookClassPage() {
       const data = await response.json()
       if (!response.ok) {
         toast.error(data.error || 'Cancellation failed', {
-          style: { background: '#1a1a1a', color: '#fbbf24', border: '1px solid #ef4444' },
+          style: { background: '#FAFAF7', color: '#1A1512', border: '1px solid #ef4444' },
         })
         return
       }
       toast.success('Booking cancelled. Your credit has been reinstated.', {
         duration: 4000,
-        style: { background: '#1a1a1a', color: '#fbbf24', border: '1px solid #22c55e' },
+        style: { background: '#FAFAF7', color: '#1A1512', border: '1px solid #22c55e' },
       })
       setTotalCredits(c => c + 1)
       await fetchClasses(user.id)
     } catch (error) {
       toast.error('Network error. Please try again.', {
-        style: { background: '#1a1a1a', color: '#fbbf24', border: '1px solid #ef4444' },
+        style: { background: '#FAFAF7', color: '#1A1512', border: '1px solid #ef4444' },
       })
     } finally {
       setProcessingClass(null)
@@ -198,38 +193,38 @@ export default function BookClassPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-amber-400 text-xl">Loading...</div>
+      <div className="min-h-screen bg-cream flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-burg border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-black p-4 sm:p-8">
+    <div className="min-h-screen bg-cream p-4 sm:p-8">
       <Toaster position="top-center" />
 
       <div className="max-w-3xl mx-auto">
         <button
           onClick={() => router.push('/dashboard')}
-          className="text-gray-400 hover:text-amber-400 mb-4 flex items-center gap-2"
+          className="text-mgray hover:text-burg mb-4 flex items-center gap-2 text-sm tracking-wide"
         >
           ← Back to Dashboard
         </button>
 
-        <h1 className="text-4xl font-bold text-amber-400 mb-2">Book a Class</h1>
-        <p className="text-gray-400 mb-6">Select a day to see available classes</p>
+        <h1 className="text-4xl font-serif font-light text-ink mb-2 tracking-wide">Book a <em className="text-burg">Class</em></h1>
+        <p className="text-mgray mb-6 text-sm">Select a day to see available classes</p>
 
         {/* Calendar */}
-        <div className="bg-gray-900 rounded-2xl border border-gray-800 p-4 sm:p-6 mb-8">
+        <div className="bg-warm-white rounded-2xl border border-rule p-4 sm:p-6 mb-8">
           {/* Month nav */}
           <div className="flex items-center justify-between mb-4">
-            <button onClick={goToPrevMonth} className="text-gray-400 hover:text-amber-400 p-2 rounded-lg hover:bg-gray-800 transition">
+            <button onClick={goToPrevMonth} className="text-mgray hover:text-burg p-2 rounded-lg hover:bg-bone transition">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h2 className="text-lg font-semibold text-white">{monthLabel}</h2>
-            <button onClick={goToNextMonth} className="text-gray-400 hover:text-amber-400 p-2 rounded-lg hover:bg-gray-800 transition">
+            <h2 className="text-lg font-serif font-light text-ink tracking-wide">{monthLabel}</h2>
+            <button onClick={goToNextMonth} className="text-mgray hover:text-burg p-2 rounded-lg hover:bg-bone transition">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
@@ -239,7 +234,7 @@ export default function BookClassPage() {
           {/* Weekday headers */}
           <div className="grid grid-cols-7 gap-1 mb-1">
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
-              <div key={d} className="text-center text-xs font-medium text-gray-500 py-1">{d}</div>
+              <div key={d} className="text-center text-xs font-medium text-lgray py-1 tracking-wider">{d}</div>
             ))}
           </div>
 
@@ -259,17 +254,15 @@ export default function BookClassPage() {
                   disabled={!hasClasses}
                   className={`relative flex items-center justify-center py-2 sm:py-3 rounded-lg transition-all ${
                     isSelected
-                      ? 'bg-amber-400/15 border border-amber-500 text-amber-400'
+                      ? 'bg-burg-pale/30 border border-burg text-burg'
                       : isToday
-                      ? 'text-amber-400 border border-amber-500/40 hover:bg-gray-800 cursor-pointer'
+                      ? 'text-burg border border-burg/40 hover:bg-bone cursor-pointer'
                       : hasClasses
-                      ? 'text-white hover:bg-gray-800 border border-transparent cursor-pointer'
-                      : 'text-gray-600 border border-transparent cursor-default'
+                      ? 'text-ink hover:bg-bone border border-transparent cursor-pointer'
+                      : 'text-lgray border border-transparent cursor-default'
                   }`}
                 >
-                  <span className="text-sm font-medium">
-                    {cell.day}
-                  </span>
+                  <span className="text-sm font-medium">{cell.day}</span>
                 </button>
               )
             })}
@@ -278,16 +271,16 @@ export default function BookClassPage() {
 
         {/* Classes section */}
         {!selectedDay ? (
-          <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800 text-center">
+          <div className="bg-warm-white rounded-2xl p-8 border border-rule text-center">
             {todayHasNoMoreClasses ? (
-              <p className="text-gray-400">No more classes available for today. Select a day to see upcoming classes.</p>
+              <p className="text-mgray text-sm">No more classes available for today. Select a day to see upcoming classes.</p>
             ) : (
-              <p className="text-gray-400">Select a day to see available classes.</p>
+              <p className="text-mgray text-sm">Select a day to see available classes.</p>
             )}
           </div>
         ) : (
           <div>
-            <h2 className="text-lg font-semibold text-white mb-4">
+            <h2 className="text-lg font-serif font-light text-ink mb-4 tracking-wide">
               {new Date(selectedDay + 'T00:00:00').toLocaleDateString('en-US', {
                 weekday: 'long',
                 month: 'long',
@@ -297,8 +290,8 @@ export default function BookClassPage() {
             </h2>
 
             {selectedClasses.length === 0 ? (
-              <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800 text-center">
-                <p className="text-gray-400">No classes available on this day.</p>
+              <div className="bg-warm-white rounded-2xl p-8 border border-rule text-center">
+                <p className="text-mgray text-sm">No classes available on this day.</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -307,10 +300,10 @@ export default function BookClassPage() {
                   const color = getAvailabilityColor(cls)
 
                   const badgeStyles: Record<string, string> = {
-                    amber: 'bg-amber-900/20 text-amber-400 border border-amber-500',
-                    red: 'bg-red-900/20 text-red-400 border border-red-500',
-                    yellow: 'bg-yellow-900/20 text-yellow-400 border border-yellow-500',
-                    green: 'bg-green-900/20 text-green-400 border border-green-500',
+                    burg: 'bg-burg-pale/30 text-burg border border-burg',
+                    red: 'bg-red-50 text-red-600 border border-red-300',
+                    yellow: 'bg-yellow-50 text-yellow-700 border border-yellow-300',
+                    green: 'bg-green-50 text-green-700 border border-green-300',
                   }
 
                   const badgeText = cls.isBooked
@@ -322,40 +315,35 @@ export default function BookClassPage() {
                   return (
                     <div
                       key={cls.id}
-                      className={`bg-gray-900 rounded-2xl p-6 border ${cls.isBooked ? 'border-amber-500/50' : 'border-gray-800'}`}
+                      className={`bg-warm-white rounded-2xl p-6 border ${cls.isBooked ? 'border-burg/40' : 'border-rule'}`}
                     >
                       <div className="flex justify-between items-start mb-4">
                         <div>
-                          <h3 className="text-xl font-bold text-white mb-1">{cls.title}</h3>
+                          <h3 className="text-xl font-serif font-light text-ink mb-1 tracking-wide">{cls.title}</h3>
                           {cls.description && (
-                            <p className="text-gray-400 text-sm">{cls.description}</p>
+                            <p className="text-mgray text-sm">{cls.description}</p>
                           )}
                         </div>
                         <div className="flex items-center gap-2">
                           <span className={`w-2.5 h-2.5 rounded-full ${dotColors[color]}`} />
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${badgeStyles[color]}`}>
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${badgeStyles[color]}`}>
                             {badgeText}
                           </span>
                         </div>
                       </div>
 
                       <div className="space-y-2 mb-4">
-                        <div className="flex items-center gap-2 text-gray-300">
-                          <svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="flex items-center gap-2 text-mgray text-sm">
+                          <svg className="w-4 h-4 text-burg flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          {new Date(cls.startTime).toLocaleTimeString('en-US', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })} - {new Date(cls.endTime).toLocaleTimeString('en-US', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
+                          {new Date(cls.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} -{' '}
+                          {new Date(cls.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                         </div>
 
                         {cls.instructor && (
-                          <div className="flex items-center gap-2 text-gray-300">
-                            <svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <div className="flex items-center gap-2 text-mgray text-sm">
+                            <svg className="w-4 h-4 text-burg flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                             </svg>
                             {cls.instructor}
@@ -367,10 +355,10 @@ export default function BookClassPage() {
                         <button
                           onClick={() => handleCancelClass(cls.id)}
                           disabled={isProcessing}
-                          className={`w-full py-3 rounded-lg font-semibold transition ${
+                          className={`w-full py-3 rounded-lg font-medium transition tracking-wider text-sm uppercase ${
                             isProcessing
-                              ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                              : 'bg-red-600 hover:bg-red-700 text-white'
+                              ? 'bg-bone text-lgray cursor-not-allowed'
+                              : 'border border-rule text-mgray hover:border-burg hover:text-burg'
                           }`}
                         >
                           {isProcessing ? 'Cancelling...' : 'Cancel Booking'}
@@ -379,12 +367,12 @@ export default function BookClassPage() {
                         <button
                           onClick={() => totalCredits === 0 ? router.push('/packages') : handleBookClass(cls.id)}
                           disabled={cls.isFull || isProcessing}
-                          className={`w-full py-3 rounded-lg font-semibold transition ${
+                          className={`w-full py-3 rounded-lg font-medium transition tracking-wider text-sm uppercase ${
                             cls.isFull
-                              ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                              ? 'bg-bone text-lgray cursor-not-allowed'
                               : isProcessing
-                              ? 'bg-amber-600 text-white cursor-not-allowed'
-                              : 'bg-amber-400 hover:bg-amber-500 text-black'
+                              ? 'bg-burg-soft text-warm-white cursor-not-allowed'
+                              : 'bg-ink hover:bg-burg text-warm-white'
                           }`}
                         >
                           {isProcessing ? 'Booking...' : cls.isFull ? 'Class Full' : totalCredits === 0 ? 'Buy More Classes' : 'Book Now'}

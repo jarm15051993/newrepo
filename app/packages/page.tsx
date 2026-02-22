@@ -35,17 +35,11 @@ export default function PackagesPage() {
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null)
 
   useEffect(() => {
-    // Get user from localStorage
     const userData = localStorage.getItem('user')
-    
+
     if (!userData) {
-      // Not logged in, redirect to login
       toast.error('Please log in to purchase classes', {
-        style: {
-          background: '#1a1a1a',
-          color: '#fbbf24',
-          border: '1px solid #ef4444',
-        },
+        style: { background: '#FAFAF7', color: '#1A1512', border: '1px solid #ef4444' },
       })
       setTimeout(() => router.push('/login'), 2000)
       return
@@ -82,19 +76,16 @@ export default function PackagesPage() {
       window.location.href = data.url
     } catch (error: any) {
       toast.error(error.message || 'Something went wrong. Please try again.', {
-        style: {
-          background: '#1a1a1a',
-          color: '#fbbf24',
-          border: '1px solid #ef4444',
-        },
+        style: { background: '#FAFAF7', color: '#1A1512', border: '1px solid #ef4444' },
       })
       setSelectedPackage(null)
     }
   }
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-amber-400 text-xl">Loading...</div>
+      <div className="min-h-screen bg-cream flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-burg border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -104,20 +95,20 @@ export default function PackagesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black p-8">
+    <div className="min-h-screen bg-cream p-8">
       <Toaster position="top-center" />
-      
+
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <button
             onClick={() => router.push('/dashboard')}
-            className="text-gray-400 hover:text-amber-400 mb-4 flex items-center gap-2"
+            className="text-mgray hover:text-burg mb-4 flex items-center gap-2 text-sm tracking-wide"
           >
             ← Back to Dashboard
           </button>
-          <h1 className="text-4xl font-bold text-amber-400 mb-2">Choose Your Package</h1>
-          <p className="text-gray-400">Select the perfect class package for your wellness journey</p>
+          <h1 className="text-4xl font-serif font-light text-ink mb-2 tracking-wide">Choose Your <em className="text-burg">Package</em></h1>
+          <p className="text-mgray text-sm">Select the perfect class package for your wellness journey</p>
         </div>
 
         {/* Packages Grid */}
@@ -125,64 +116,60 @@ export default function PackagesPage() {
           {PACKAGES.map((pkg) => (
             <div
               key={pkg.id}
-              className="bg-gray-900 rounded-2xl p-8 border border-gray-800 hover:border-amber-400 transition-all"
+              className="bg-warm-white rounded-2xl p-8 border border-rule hover:border-burg transition-all"
             >
-              {/* Package Header */}
               <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold text-white mb-2">{pkg.name}</h2>
-                <p className="text-gray-400 text-sm">{pkg.description}</p>
+                <h2 className="text-2xl font-serif font-light text-ink mb-2 tracking-wide">{pkg.name}</h2>
+                <p className="text-mgray text-sm">{pkg.description}</p>
               </div>
 
-              {/* Price */}
               <div className="text-center mb-6">
-                <div className="text-5xl font-bold text-amber-400 mb-2">
+                <div className="text-5xl font-serif font-light text-burg mb-2">
                   €{pkg.price}
                 </div>
-                <div className="text-gray-400">
+                <div className="text-mgray text-sm">
                   {pkg.classes} {pkg.classes === 1 ? 'class' : 'classes'}
                 </div>
                 {pkg.classes > 1 && (
-                  <div className="text-sm text-green-400 mt-2">
+                  <div className="text-sm text-green-700 mt-2">
                     €{(pkg.price / pkg.classes).toFixed(2)} per class
                   </div>
                 )}
               </div>
 
-              {/* Features */}
               <div className="mb-6 space-y-3">
-                <div className="flex items-center gap-2 text-gray-300">
-                  <svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex items-center gap-2 text-ink">
+                  <svg className="w-5 h-5 text-burg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  Full access to studio
+                  <span className="text-sm">Full access to studio</span>
                 </div>
-                <div className="flex items-center gap-2 text-gray-300">
-                  <svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex items-center gap-2 text-ink">
+                  <svg className="w-5 h-5 text-burg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  All equipment included
+                  <span className="text-sm">All equipment included</span>
                 </div>
-                <div className="flex items-center gap-2 text-gray-300">
-                  <svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex items-center gap-2 text-ink">
+                  <svg className="w-5 h-5 text-burg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  Expert instructors
+                  <span className="text-sm">Expert instructors</span>
                 </div>
                 {pkg.classes >= 5 && (
-                  <div className="flex items-center gap-2 text-green-400 font-semibold">
+                  <div className="flex items-center gap-2 text-green-700 font-medium">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    Priority booking
+                    <span className="text-sm">Priority booking</span>
                   </div>
                 )}
               </div>
 
-              {/* Buy Button */}
               <button
                 onClick={() => handlePurchase(pkg.id)}
                 disabled={selectedPackage === pkg.id}
-                className="w-full bg-amber-400 hover:bg-amber-500 text-black font-semibold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-ink hover:bg-burg text-warm-white font-medium py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed tracking-wider text-sm uppercase"
               >
                 {selectedPackage === pkg.id ? 'Processing...' : 'Buy Now'}
               </button>
@@ -191,23 +178,23 @@ export default function PackagesPage() {
         </div>
 
         {/* Payment Info */}
-        <div className="mt-12 bg-gray-900 rounded-2xl p-6 border border-gray-800">
-          <h3 className="text-xl font-bold text-amber-400 mb-3">Payment Information</h3>
-          <ul className="space-y-2 text-gray-300">
+        <div className="mt-12 bg-warm-white rounded-2xl p-6 border border-rule">
+          <h3 className="text-xl font-serif font-light text-burg mb-3 tracking-wide">Payment Information</h3>
+          <ul className="space-y-2 text-ink text-sm">
             <li className="flex items-start gap-2">
-              <span className="text-amber-400 mt-1">•</span>
+              <span className="text-burg mt-1">·</span>
               <span>Secure payment processing via Stripe</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-amber-400 mt-1">•</span>
+              <span className="text-burg mt-1">·</span>
               <span>Classes are valid for 6 months from purchase date</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-amber-400 mt-1">•</span>
+              <span className="text-burg mt-1">·</span>
               <span>All prices are in Euros (€)</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-amber-400 mt-1">•</span>
+              <span className="text-burg mt-1">·</span>
               <span>Credits will be added to your account immediately after payment</span>
             </li>
           </ul>
