@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { sendEmail } from '@/lib/email'
+import { getAppUrl } from '@/lib/app-url'
 
 function toIcalDate(date: Date): string {
   return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'
@@ -165,7 +166,7 @@ export async function POST(request: NextRequest) {
           to: user.email,
           type: 'booking_confirmation',
           userId,
-          vars: { name: user.name ?? user.email, classTitle: cls.title, date, time, reformerNumber: String(result.stretcherNumber) },
+          vars: { name: user.name ?? user.email, classTitle: cls.title, date, time, reformerNumber: String(result.stretcherNumber), dashboardUrl: `${getAppUrl()}/dashboard` },
           metadata: { bookingId: result.id, classId },
           attachments: [{ filename: 'class-invite.ics', content: Buffer.from(icsContent), contentType: 'text/calendar; method=REQUEST' }],
         })
@@ -268,7 +269,7 @@ export async function DELETE(request: NextRequest) {
       to: cancelledUser.email,
       type: 'booking_cancellation',
       userId,
-      vars: { name: cancelledUser.name ?? cancelledUser.email, classTitle: cancelledClass.title, date, time },
+      vars: { name: cancelledUser.name ?? cancelledUser.email, classTitle: cancelledClass.title, date, time, bookUrl: `${getAppUrl()}/book` },
       metadata: { classId },
     }).catch(e => console.error('[book] Failed to send cancellation email:', e))
 
