@@ -147,10 +147,10 @@ export async function POST(request: NextRequest) {
       return booking
     })
 
-    // Send booking confirmation email with .ics calendar invite (fire-and-forget)
-    prisma.user.findUnique({ where: { id: userId }, select: { email: true, name: true } })
-      .then(user => {
-        if (!user) return
+    // Send booking confirmation email with .ics calendar invite
+    try {
+      const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true, name: true } })
+      if (user) {
         const cls = result.class
         const date = new Date(cls.startTime).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
         const time = `${new Date(cls.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} - ${new Date(cls.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`
@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
           start: cls.startTime,
           end: cls.endTime,
         })
-        return sendEmail({
+        await sendEmail({
           to: user.email,
           type: 'booking_confirmation',
           userId,
@@ -170,8 +170,10 @@ export async function POST(request: NextRequest) {
           metadata: { bookingId: result.id, classId },
           attachments: [{ filename: 'class-invite.ics', content: Buffer.from(icsContent), contentType: 'text/calendar; method=REQUEST' }],
         })
-      })
-      .catch(e => console.error('[book] Failed to send confirmation email:', e))
+      }
+    } catch (e) {
+      console.error('[book] Failed to send confirmation email:', e)
+    }
 
     return NextResponse.json({
       message: 'Class booked successfully',
@@ -260,18 +262,22 @@ export async function DELETE(request: NextRequest) {
       }
     })
 
-    // Send cancellation email (fire-and-forget)
-    const cancelledClass = booking.class
-    const cancelledUser = booking.user
-    const date = new Date(cancelledClass.startTime).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
-    const time = `${new Date(cancelledClass.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} - ${new Date(cancelledClass.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`
-    sendEmail({
-      to: cancelledUser.email,
-      type: 'booking_cancellation',
-      userId,
-      vars: { name: cancelledUser.name ?? cancelledUser.email, classTitle: cancelledClass.title, date, time, bookUrl: `${getAppUrl()}/book` },
-      metadata: { classId },
-    }).catch(e => console.error('[book] Failed to send cancellation email:', e))
+    // Send cancellation email
+    try {
+      const cancelledClass = booking.class
+      const cancelledUser = booking.user
+      const date = new Date(cancelledClass.startTime).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+      const time = `${new Date(cancelledClass.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} - ${new Date(cancelledClass.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`
+      await sendEmail({
+        to: cancelledUser.email,
+        type: 'booking_cancellation',
+        userId,
+        vars: { name: cancelledUser.name ?? cancelledUser.email, classTitle: cancelledClass.title, date, time, bookUrl: `${getAppUrl()}/book` },
+        metadata: { classId },
+      })
+    } catch (e) {
+      console.error('[book] Failed to send cancellation email:', e)
+    }
 
     return NextResponse.json({ message: 'Booking cancelled and credit reinstated' })
   } catch (error: any) {
