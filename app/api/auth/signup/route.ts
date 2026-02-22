@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { sendEmail } from '@/lib/email'
+import { getAppUrl } from '@/lib/app-url'
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,14 +30,13 @@ export async function POST(request: NextRequest) {
       data: { email, activationToken },
     })
 
-    // Send activation email (fire-and-forget)
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-    sendEmail({
+    const appUrl = getAppUrl()
+    await sendEmail({
       to: user.email,
       type: 'activation',
       userId: user.id,
       vars: { name: user.email, link: `${appUrl}/activate?token=${activationToken}` },
-    }).catch(e => console.error('[signup] Failed to send activation email:', e))
+    })
 
     return NextResponse.json({ message: 'Check your email to activate your account.' }, { status: 201 })
   } catch (error) {
