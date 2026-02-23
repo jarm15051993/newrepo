@@ -294,8 +294,7 @@ export default function DashboardPage() {
   const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([])
   const [profilePicture, setProfilePicture] = useState<string | null>(null)
   const [pictureVersion, setPictureVersion] = useState(0)
-  const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle')
-  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading'>('idle')
   const [isDragging, setIsDragging] = useState(false)
   const [cancellingId, setCancellingId] = useState<string | null>(null)
 
@@ -338,12 +337,10 @@ export default function DashboardPage() {
     const fileName = file.name.toLowerCase()
     const hasValidExtension = ALLOWED_EXTENSIONS.some(ext => fileName.endsWith(ext))
     if (!hasValidExtension) {
-      setUploadError('Only .png, .jpg, .jpeg, .heic, and .heif files are allowed')
-      setUploadStatus('error')
+      toast.error('Only .png, .jpg, .jpeg, .heic, and .heif files are allowed', { style: { background: '#FAFAF7', color: '#1A1512', border: '1px solid #ef4444' } })
       return
     }
     setUploadStatus('uploading')
-    setUploadError(null)
     const formData = new FormData()
     formData.append('file', file)
     formData.append('userId', user.id)
@@ -353,16 +350,17 @@ export default function DashboardPage() {
       if (!response.ok) throw new Error(data.error || 'Upload failed')
       setProfilePicture(data.profilePicture)
       setPictureVersion(v => v + 1)
-      setUploadStatus('success')
+      setUploadStatus('idle')
       const stored = localStorage.getItem('user')
       if (stored) {
         const updated = { ...JSON.parse(stored), profilePicture: data.profilePicture }
         localStorage.setItem('user', JSON.stringify(updated))
         setUser(updated)
       }
+      toast.success('Profile picture updated!', { style: { background: '#FAFAF7', color: '#1A1512', border: '1px solid #22c55e' } })
     } catch (error: any) {
-      setUploadError(error.message || 'Upload failed. Please try again.')
-      setUploadStatus('error')
+      setUploadStatus('idle')
+      toast.error(error.message || 'Upload failed. Please try again.', { style: { background: '#FAFAF7', color: '#1A1512', border: '1px solid #ef4444' } })
     }
   }, [user])
 
@@ -564,7 +562,7 @@ export default function DashboardPage() {
         {/* Header */}
         <div className="flex justify-between items-center mb-1">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="OOMA Wellness" className="h-[560px] w-auto -mt-[200px] -mb-[220px]" style={{ mixBlendMode: 'multiply' }} />
+          <img src="/logo.png" alt="OOMA Wellness" className="h-[560px] w-auto -mt-[200px] -mb-[220px] -ml-[45px]" style={{ mixBlendMode: 'multiply' }} />
           <button onClick={handleLogout}
             className="px-4 py-2 border border-rule text-mgray hover:border-burg hover:text-burg rounded-lg transition text-sm tracking-wide">
             Logout
@@ -609,8 +607,6 @@ export default function DashboardPage() {
                   )}
                 </div>
               </div>
-              {uploadStatus === 'success' && <p className="mt-2 text-green-700 text-xs">Updated!</p>}
-              {uploadStatus === 'error' && uploadError && <p className="mt-2 text-burg text-xs">{uploadError}</p>}
             </div>
 
             <div className="flex-1 grid grid-cols-2 gap-x-4 gap-y-6">
@@ -619,26 +615,20 @@ export default function DashboardPage() {
               <FieldRow key={editingField === 'email' ? 'email-e' : 'email'} {...fieldRowShared} field="email" label="Email" display={user.email} initialValue={user.email || ''} isEditing={editingField === 'email'} />
               <FieldRow key={editingField === 'phone' ? 'phone-e' : 'phone'} {...fieldRowShared} field="phone" label="Phone" display={user.phone} initialValue={user.phone || ''} isEditing={editingField === 'phone'} />
               <FieldRow key={editingField === 'birthday' ? 'birthday-e' : 'birthday'} {...fieldRowShared} field="birthday" label="Birthday" display={user.birthday ? new Date(user.birthday).toLocaleDateString('en-US', { timeZone: 'UTC' }) : '—'} initialValue={user.birthday || ''} isEditing={editingField === 'birthday'} />
-            </div>
-          </div>
-
-          {/* Credits */}
-          <div className="border-t border-rule pt-6">
-            <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
                 <p className="text-xs font-medium text-mgray tracking-wider uppercase mb-1">Class Credits</p>
-                <p className="text-ink text-lg">
-                  <span className="text-burg font-serif font-light text-5xl">{totalCredits}</span>{' '}
+                <div className="flex items-center gap-2">
+                  <span className="text-burg font-serif font-light text-5xl">{totalCredits}</span>
                   <span className="text-mgray text-base">{totalCredits === 1 ? 'class' : 'classes'} remaining</span>
-                </p>
+                </div>
                 {totalCredits === 0 && (
                   <p className="text-mgray text-sm mt-1">Purchase a package to start booking classes!</p>
                 )}
+                <button onClick={() => router.push('/packages')}
+                  className="mt-3 px-6 py-2 bg-ink hover:bg-burg text-warm-white font-medium rounded-lg transition tracking-wider text-sm uppercase">
+                  Buy More Classes
+                </button>
               </div>
-              <button onClick={() => router.push('/packages')}
-                className="px-6 py-3 bg-ink hover:bg-burg text-warm-white font-medium rounded-lg transition tracking-wider text-sm uppercase">
-                Buy More Classes
-              </button>
             </div>
           </div>
         </div>

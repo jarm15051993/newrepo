@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
 
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    await prisma.$transaction([
+    const [updatedUser] = await prisma.$transaction([
       prisma.user.update({
         where: { id: resetToken.userId },
         data: { password: hashedPassword },
@@ -31,7 +31,9 @@ export async function POST(request: NextRequest) {
       }),
     ])
 
-    return NextResponse.json({ message: 'Password reset successfully' })
+    const { password: _, ...userWithoutPassword } = updatedUser
+
+    return NextResponse.json({ message: 'Password reset successfully', user: userWithoutPassword })
   } catch (error) {
     console.error('Reset password error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

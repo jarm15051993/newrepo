@@ -65,8 +65,9 @@ function ResetPasswordContent() {
         return
       }
 
-      toast.success('Password reset! Redirecting to login…', { duration: 2500, style: toastStyle('#22c55e') })
-      setTimeout(() => router.push('/login'), 2500)
+      localStorage.setItem('user', JSON.stringify(data.user))
+      toast.success('Password reset! Redirecting to dashboard…', { duration: 2500, style: toastStyle('#22c55e') })
+      setTimeout(() => router.push('/dashboard'), 2500)
     } catch {
       toast.error('Network error. Please try again.', { style: toastStyle('#ef4444') })
       setLoading(false)

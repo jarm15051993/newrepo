@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import toast, { Toaster } from 'react-hot-toast'
-import { COUNTRY_CODES } from '@/lib/constants'
+import { COUNTRY_CODES, PHONE_LENGTHS } from '@/lib/constants'
 
 const toastStyle = (border: string) => ({
   background: '#FAFAF7',
@@ -64,8 +64,9 @@ interface FormState {
   phone: string
   goals: string
   birthday: string
-  additionalInfo: string
 }
+
+const CONDITIONS = ['Pregnancy', 'Post-Surgery', 'Hernia', 'Chronic Condition'] as const
 
 function EyeIcon({ open }: { open: boolean }) {
   return open ? (
@@ -99,8 +100,14 @@ function OnboardingContent() {
     phone: '',
     goals: '',
     birthday: '',
-    additionalInfo: '',
   })
+  const [hasConditions, setHasConditions] = useState<boolean | null>(null)
+  const [conditions, setConditions] = useState<string[]>([])
+  const [conditionOther, setConditionOther] = useState('')
+  const [disclaimerAccepted, setDisclaimerAccepted] = useState(false)
+
+  const toggleCondition = (c: string) =>
+    setConditions(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c])
 
   useEffect(() => {
     if (!userId) {
@@ -117,7 +124,8 @@ function OnboardingContent() {
       return
     }
     setPhoneError('')
-    if (value.length > 15) return
+    const maxLen = PHONE_LENGTHS[form.countryCode]?.max ?? 15
+    if (value.length > maxLen) return
     set('phone', value)
   }
 
@@ -149,12 +157,25 @@ function OnboardingContent() {
         setPhoneError('Only digits are allowed — no spaces, dashes, or symbols')
         return 'Phone must contain digits only'
       }
+      const lengths = PHONE_LENGTHS[form.countryCode]
+      if (lengths) {
+        if (form.phone.length < lengths.min) {
+          const msg = lengths.min === lengths.max
+            ? `Phone must be exactly ${lengths.min} digits for ${form.countryCode}`
+            : `Phone must be at least ${lengths.min} digits for ${form.countryCode}`
+          setPhoneError(msg)
+          return msg
+        }
+      }
     }
     if (step === 3) {
       if (!form.goals.trim()) return 'Please tell us your goal'
     }
     if (step === 4) {
       if (!form.birthday) return 'Birthday is required'
+      if (hasConditions === null) return 'Please answer the health conditions question'
+      if (hasConditions && conditions.length === 0) return 'Please select at least one condition'
+      if (hasConditions && conditions.includes('Other') && !conditionOther.trim()) return 'Please describe your other condition'
     }
     return null
   }
@@ -201,7 +222,12 @@ function OnboardingContent() {
           phone: fullPhone,
           goals: form.goals.trim(),
           birthday: form.birthday,
-          additionalInfo: form.additionalInfo.trim() || null,
+          additionalInfo: (() => {
+            if (!hasConditions) return null
+            const parts = conditions.filter(c => c !== 'Other')
+            if (conditions.includes('Other') && conditionOther.trim()) parts.push(`Other: ${conditionOther.trim()}`)
+            return parts.join(', ') || null
+          })(),
         }),
       })
       const data = await response.json()
@@ -225,7 +251,7 @@ function OnboardingContent() {
   const STEPS = [
     'Create your password',
     'Yourself',
-    'How can we reach you',
+    'How can we reach you?',
     "What's your goal",
     'Tell us about yourself',
   ]
@@ -325,7 +351,7 @@ function OnboardingContent() {
                   className="px-3 py-2 bg-warm-white border border-rule rounded-lg focus:ring-2 focus:ring-burg focus:border-transparent text-ink text-sm"
                 >
                   {COUNTRY_CODES.map(c => (
-                    <option key={c.code} value={c.code}>{c.label}</option>
+                    <option key={c.code} value={c.code}>{c.flag} {c.label}</option>
                   ))}
                 </select>
                 <input
@@ -337,10 +363,19 @@ function OnboardingContent() {
                   className={`flex-1 ${inputClass(!!phoneError)}`}
                 />
               </div>
-              {phoneError
-                ? <p className="text-xs text-burg mt-1">{phoneError}</p>
-                : <p className="text-xs text-mgray mt-1">Digits only, no spaces or dashes</p>
-              }
+              {phoneError ? (
+                <p className="text-xs text-burg mt-1">{phoneError}</p>
+              ) : (
+                <p className="text-xs text-mgray mt-1">
+                  {(() => {
+                    const l = PHONE_LENGTHS[form.countryCode]
+                    if (!l) return 'Digits only, no spaces or dashes'
+                    return l.min === l.max
+                      ? `${l.min} digits required`
+                      : `${l.min}–${l.max} digits required`
+                  })()}
+                </p>
+              )}
             </div>
           )}
 
@@ -363,23 +398,127 @@ function OnboardingContent() {
                 <label className="block text-sm font-medium text-ink mb-1 tracking-wide">Birthday *</label>
                 <BirthdayPicker value={form.birthday} onChange={v => set('birthday', v)} className={inputClass()} />
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-ink mb-1 tracking-wide">
-                  Health notes <span className="text-mgray">(optional)</span>
-                </label>
-                <textarea
-                  value={form.additionalInfo}
-                  onChange={e => set('additionalInfo', e.target.value)}
-                  rows={3}
-                  placeholder="Injuries, pregnancy, medical conditions, allergies…"
-                  className="w-full px-4 py-2 bg-warm-white border border-rule rounded-lg focus:ring-2 focus:ring-burg focus:border-transparent text-ink placeholder-lgray resize-none"
-                />
+                <p className="block text-sm font-medium text-ink mb-3 tracking-wide">Do you have any injuries or special conditions? *</p>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setHasConditions(false)}
+                    className={`flex-1 py-2.5 rounded-lg border font-medium text-sm tracking-wider uppercase transition ${
+                      hasConditions === false
+                        ? 'bg-ink text-warm-white border-ink'
+                        : 'border-rule text-mgray hover:border-burg hover:text-burg'
+                    }`}
+                  >
+                    No
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setHasConditions(true)}
+                    className={`flex-1 py-2.5 rounded-lg border font-medium text-sm tracking-wider uppercase transition ${
+                      hasConditions === true
+                        ? 'bg-ink text-warm-white border-ink'
+                        : 'border-rule text-mgray hover:border-burg hover:text-burg'
+                    }`}
+                  >
+                    Yes
+                  </button>
+                </div>
               </div>
+
+              {hasConditions === true && (
+                <div>
+                  <p className="text-xs font-medium text-mgray tracking-wider uppercase mb-3">Select all that apply</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {CONDITIONS.map(c => {
+                      const selected = conditions.includes(c)
+                      return (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => toggleCondition(c)}
+                          className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg border text-sm text-left transition ${
+                            selected ? 'bg-burg border-burg text-warm-white' : 'border-rule text-ink hover:border-burg'
+                          }`}
+                        >
+                          <span className={`w-4 h-4 flex-shrink-0 rounded border flex items-center justify-center transition ${
+                            selected ? 'border-warm-white' : 'border-rule'
+                          }`}>
+                            {selected && (
+                              <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </span>
+                          {c}
+                        </button>
+                      )
+                    })}
+                    <button
+                      type="button"
+                      onClick={() => toggleCondition('Other')}
+                      className={`col-span-2 flex items-center gap-2.5 px-3 py-2.5 rounded-lg border text-sm text-left transition ${
+                        conditions.includes('Other') ? 'bg-burg border-burg text-warm-white' : 'border-rule text-ink hover:border-burg'
+                      }`}
+                    >
+                      <span className={`w-4 h-4 flex-shrink-0 rounded border flex items-center justify-center transition ${
+                        conditions.includes('Other') ? 'border-warm-white' : 'border-rule'
+                      }`}>
+                        {conditions.includes('Other') && (
+                          <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </span>
+                      Other (specify)
+                    </button>
+                  </div>
+                  {conditions.includes('Other') && (
+                    <textarea
+                      value={conditionOther}
+                      onChange={e => setConditionOther(e.target.value)}
+                      rows={2}
+                      placeholder="Please describe your condition…"
+                      className="w-full mt-2 px-4 py-2 bg-warm-white border border-rule rounded-lg focus:ring-2 focus:ring-burg focus:border-transparent text-ink placeholder-lgray resize-none text-sm"
+                    />
+                  )}
+                </div>
+              )}
             </>
           )}
         </div>
 
-        <div className="flex gap-3 mt-8">
+        {step === 4 && (
+          <label className="flex items-start gap-3 mt-6 cursor-pointer">
+            <div
+              onClick={() => setDisclaimerAccepted(v => !v)}
+              className={`mt-0.5 w-4 h-4 flex-shrink-0 rounded border flex items-center justify-center transition ${
+                disclaimerAccepted ? 'bg-burg border-burg' : 'border-rule hover:border-burg'
+              }`}
+            >
+              {disclaimerAccepted && (
+                <svg className="w-2.5 h-2.5 text-warm-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </div>
+            <span className="text-sm text-mgray leading-snug" onClick={() => setDisclaimerAccepted(v => !v)}>
+              I have read and acknowledge the{' '}
+              <a
+                href="#"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={e => e.stopPropagation()}
+                className="text-burg hover:underline"
+              >
+                Health &amp; Liability Disclaimer
+              </a>
+            </span>
+          </label>
+        )}
+
+        <div className="flex gap-3 mt-4">
           {step > 0 && (
             <button
               type="button"
@@ -392,7 +531,7 @@ function OnboardingContent() {
           <button
             type="button"
             onClick={handleNext}
-            disabled={loading}
+            disabled={loading || (step === 4 && (hasConditions === null || (hasConditions === true && conditions.length === 0) || !disclaimerAccepted))}
             className="flex-1 bg-ink hover:bg-burg text-warm-white font-medium py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed tracking-wider text-sm uppercase"
           >
             {loading ? 'Saving…' : step === 4 ? "Let's go!" : 'Continue'}
