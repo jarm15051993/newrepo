@@ -28,12 +28,16 @@ export async function POST(request: NextRequest) {
     })
 
     const appUrl = getAppUrl()
-    await sendEmail({
-      to: user.email,
-      type: 'activation',
-      userId: user.id,
-      vars: { name: user.name ?? user.email, link: `${appUrl}/activate?token=${activationToken}` },
-    })
+    try {
+      await sendEmail({
+        to: user.email,
+        type: 'activation',
+        userId: user.id,
+        vars: { name: user.name ?? user.email, link: `${appUrl}/activate?token=${activationToken}` },
+      })
+    } catch (emailErr) {
+      console.error('[resend-activation] Failed to send activation email:', emailErr)
+    }
 
     return NextResponse.json({ message: 'If that account exists and is not yet activated, a new link has been sent.' })
   } catch (error) {

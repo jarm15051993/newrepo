@@ -187,7 +187,7 @@ export default function PackagesPage() {
             </li>
             <li className="flex items-start gap-2">
               <span className="text-burg mt-1">·</span>
-              <span>Classes are valid for 6 months from purchase date</span>
+              <span>Classes are valid for 1 month from purchase date</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-burg mt-1">·</span>

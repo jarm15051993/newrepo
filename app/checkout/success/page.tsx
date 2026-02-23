@@ -105,7 +105,7 @@ function CheckoutSuccessContent() {
           <span className="text-burg font-medium text-lg">{creditsAdded}</span>{' '}
           {creditsAdded === 1 ? 'class credit has' : 'class credits have'} been added to your account.
         </p>
-        <p className="text-mgray text-sm mb-6">Your credits are valid for 6 months.</p>
+        <p className="text-mgray text-sm mb-6">Your credits are valid for 1 month.</p>
         <p className="text-mgray text-sm mb-6">
           Redirecting to dashboard in {countdown} second{countdown !== 1 ? 's' : ''}…
         </p>
