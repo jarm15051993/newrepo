@@ -24,12 +24,11 @@ interface SendEmailOptions {
   attachments?: Array<{ filename: string; content: Buffer; contentType?: string }>
 }
 
-export async function sendEmail({ to, type, userId, vars, metadata, attachments }: SendEmailOptions) {
+export async function sendEmail({ to, type, userId, vars, metadata, attachments }: SendEmailOptions): Promise<void> {
   // Fetch template from DB
   const template = await prisma.emailTemplate.findUnique({ where: { type } })
   if (!template) {
-    console.error(`[email] No template found for type: ${type}`)
-    return
+    throw new Error(`No email template found for type: ${type}`)
   }
 
   const subject = applyPlaceholders(template.subject, vars)
@@ -37,14 +36,19 @@ export async function sendEmail({ to, type, userId, vars, metadata, attachments 
 
   let status = 'sent'
   try {
-    const result = await getResend().emails.send({ from: FROM, to, subject, html, attachments })
+    const result = await getResend().emails.send({ from: FROM, to, subject, html, ...(attachments ? { attachments } : {}) })
     if ('error' in result && result.error) {
       console.error(`[email] Resend error sending ${type} to ${to}:`, result.error)
       status = 'failed'
+      throw new Error((result.error as any).message || 'Email send failed')
     }
   } catch (err) {
-    console.error(`[email] Failed to send ${type} to ${to}:`, err)
     status = 'failed'
+    // Log before re-throwing
+    prisma.emailLog.create({
+      data: { userId: userId ?? null, to, type, subject, status, metadata: metadata ? (metadata as any) : undefined },
+    }).catch(e => console.error('[email] Failed to write EmailLog:', e))
+    throw err
   }
 
   // Log to EmailLog (fire-and-forget — don't throw if logging fails)

@@ -31,12 +31,16 @@ export async function POST(request: NextRequest) {
     })
 
     const appUrl = getAppUrl()
-    await sendEmail({
-      to: user.email,
-      type: 'activation',
-      userId: user.id,
-      vars: { name: user.email, link: `${appUrl}/activate?token=${activationToken}` },
-    })
+    try {
+      await sendEmail({
+        to: user.email,
+        type: 'activation',
+        userId: user.id,
+        vars: { name: user.email, link: `${appUrl}/activate?token=${activationToken}` },
+      })
+    } catch (emailErr) {
+      console.error('[signup] Failed to send activation email:', emailErr)
+    }
 
     return NextResponse.json({ message: 'Check your email to activate your account.' }, { status: 201 })
   } catch (error) {

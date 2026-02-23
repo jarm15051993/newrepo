@@ -97,11 +97,15 @@ export default function LoginPage() {
     e.preventDefault()
     setForgotLoading(true)
     try {
-      await fetch('/api/auth/forgot-password', {
+      const res = await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: forgotEmail }),
       })
+      if (!res.ok) {
+        toast.error('Failed to send reset email. Please try again.', { style: toastStyle('#ef4444') })
+        return
+      }
       setForgotSent(true)
     } catch {
       toast.error('Network error. Please try again.', { style: toastStyle('#ef4444') })
