@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
+import { getAppUrl } from '@/lib/app-url'
 
 const PACKAGES = [
   { id: '1', name: '1 Class', classes: 1, price: 10 },
@@ -42,8 +43,8 @@ export async function POST(request: NextRequest) {
         },
       ],
       mode: 'payment',
-      success_url: `${process.env.NEXTAUTH_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXTAUTH_URL}/packages`,
+      success_url: `${getAppUrl()}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${getAppUrl()}/packages`,
       customer_email: userEmail,
       metadata: {
         userId: userId,
