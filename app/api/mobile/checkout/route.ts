@@ -25,33 +25,19 @@ export async function POST(request: NextRequest) {
 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-01-28.clover' })
 
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price_data: {
-            currency: 'eur',
-            product_data: {
-              name: selectedPackage.name,
-              description: `${selectedPackage.classes} pilates ${selectedPackage.classes === 1 ? 'class' : 'classes'} at OOMA Wellness Club`,
-            },
-            unit_amount: selectedPackage.price * 100,
-          },
-          quantity: 1,
-        },
-      ],
-      mode: 'payment',
-      success_url: `ooma://checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `ooma://packages`,
-      customer_email: user.email,
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: selectedPackage.price * 100,
+      currency: 'eur',
+      receipt_email: user.email,
       metadata: {
         userId,
         packageId,
         classes: selectedPackage.classes.toString(),
+        packageName: selectedPackage.name,
       },
     })
 
-    return NextResponse.json({ url: session.url })
+    return NextResponse.json({ clientSecret: paymentIntent.client_secret })
   } catch (error: any) {
     console.error('[mobile/checkout] Error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
