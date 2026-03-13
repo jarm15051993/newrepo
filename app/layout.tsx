@@ -1,23 +1,23 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Montserrat } from "next/font/google";
+import { Playfair_Display, Jost } from "next/font/google";
 import "./globals.css";
 
-const cormorant = Cormorant_Garamond({
-  variable: "--font-cormorant",
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
   subsets: ["latin"],
-  weight: ["300", "400"],
+  weight: ["400", "500"],
   style: ["normal", "italic"],
 });
 
-const montserrat = Montserrat({
-  variable: "--font-montserrat",
+const jost = Jost({
+  variable: "--font-jost",
   subsets: ["latin"],
   weight: ["200", "300", "400", "500"],
 });
 
 export const metadata: Metadata = {
-  title: "OOMA Wellness",
-  description: "OOMA Wellness Club",
+  title: "OOMA Wellness Club",
+  description: "El cuerpo es tu obra maestra.",
 };
 
 export default function RootLayout({
@@ -26,8 +26,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${cormorant.variable} ${montserrat.variable} antialiased`}>
+    <html lang="es">
+      <body className={`${playfair.variable} ${jost.variable}`}>
         {children}
       </body>
     </html>
