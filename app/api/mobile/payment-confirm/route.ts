@@ -15,8 +15,8 @@ export async function POST(request: NextRequest) {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-01-28.clover' })
     const intent = await stripe.paymentIntents.retrieve(paymentIntentId)
 
-    if (intent.status !== 'succeeded') {
-      return NextResponse.json({ error: 'Payment not completed' }, { status: 400 })
+    if (intent.status !== 'succeeded' && intent.status !== 'processing') {
+      return NextResponse.json({ error: `Payment not completed (status: ${intent.status})` }, { status: 400 })
     }
 
     // Idempotency — don't double-add credits
