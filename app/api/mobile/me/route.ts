@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
         phone: true,
         profilePicture: true,
         onboardingCompleted: true,
+        qrCode: true,
         activatedAt: true,
         createdAt: true,
         updatedAt: true,
