@@ -17,10 +17,6 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ message: 'User not found' }, { status: 404 })
     }
 
-    if (!user.activatedAt) {
-      return NextResponse.json({ message: 'Account not activated' }, { status: 403 })
-    }
-
     // Check phone uniqueness (ignore self)
     const existingPhone = await prisma.user.findFirst({
       where: { phone, NOT: { id: userId } },
@@ -42,6 +38,8 @@ export async function PATCH(request: NextRequest) {
         birthday: new Date(birthday),
         additionalInfo: additionalInfo || null,
         onboardingCompleted: true,
+        // Activate the account if it wasn't already (e.g. legacy users or mobile flow)
+        activatedAt: user.activatedAt ?? new Date(),
       },
     })
 
