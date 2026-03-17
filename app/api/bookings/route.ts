@@ -63,13 +63,23 @@ export async function POST(request: NextRequest) {
     }
 
     const booking = await prisma.$transaction(async tx => {
-      const newBooking = await tx.booking.create({
-        data: {
+      const newBooking = await tx.booking.upsert({
+        where: { userId_classId: { userId, classId } },
+        create: {
           userId,
           classId,
           stretcherNumber: availableReformer,
           status: 'confirmed',
           userCreditId: creditToUse.id,
+          creditLost: false,
+          cancelledAt: null,
+        },
+        update: {
+          stretcherNumber: availableReformer,
+          status: 'confirmed',
+          userCreditId: creditToUse.id,
+          creditLost: false,
+          cancelledAt: null,
         },
         include: { class: true },
       })
