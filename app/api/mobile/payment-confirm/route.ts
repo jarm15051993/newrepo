@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { verifyToken, extractBearerToken } from '@/lib/jwt'
 import { prisma } from '@/lib/prisma'
+import { sendEmail } from '@/lib/email'
 
 export async function POST(request: NextRequest) {
   try {
@@ -49,6 +50,22 @@ export async function POST(request: NextRequest) {
         expiresAt,
       },
     })
+
+    // Fire-and-forget purchase confirmation email
+    const packageName = intent.metadata.packageName ?? `${classes} Class Pack`
+    const amount = ((intent.amount_received || 0) / 100).toFixed(2)
+    const expiresLabel = expiresAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    prisma.user.findUnique({ where: { id: userId }, select: { email: true, name: true } })
+      .then(user => {
+        if (!user) return
+        return sendEmail({
+          to: user.email,
+          type: 'package_purchase',
+          userId,
+          vars: { name: user.name ?? 'there', packageName, classCount: classes, amount, expiresAt: expiresLabel },
+        })
+      })
+      .catch(err => console.error('[payment-confirm] Email error:', err))
 
     return NextResponse.json({ creditsAdded: classCount })
   } catch (error: any) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken, extractBearerToken } from '@/lib/jwt'
+import { sendEmail } from '@/lib/email'
 
 export async function POST(request: NextRequest) {
   try {
@@ -96,6 +97,27 @@ export async function POST(request: NextRequest) {
 
       return newBooking
     })
+
+    // Fire-and-forget confirmation email
+    prisma.user.findUnique({ where: { id: userId }, select: { email: true, name: true } })
+      .then(user => {
+        if (!user) return
+        const date = booking.class.startTime.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+        const time = booking.class.startTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        return sendEmail({
+          to: user.email,
+          type: 'booking_confirmation',
+          userId,
+          vars: {
+            name: user.name ?? 'there',
+            classTitle: booking.class.title,
+            date,
+            time,
+            reformerNumber: String(booking.stretcherNumber),
+          },
+        })
+      })
+      .catch(err => console.error('[bookings POST] Email error:', err))
 
     return NextResponse.json({ booking })
   } catch (error: any) {
