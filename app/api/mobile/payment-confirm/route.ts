@@ -39,8 +39,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    const expiresAt = new Date()
-    expiresAt.setMonth(expiresAt.getMonth() + 6)
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
 
     await prisma.userCredit.create({
       data: {

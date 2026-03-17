@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
         classesRemaining: uc.creditsRemaining,
         purchasedAt: uc.createdAt,
         expiresAt: uc.expiresAt,
+        expiredReason: uc.creditsRemaining === 0 ? 'classes_used' : 'date_expired',
       }))
       .sort((a, b) => {
         // most recently expired first
