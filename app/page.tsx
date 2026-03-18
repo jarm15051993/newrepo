@@ -66,14 +66,15 @@ nav {
 }
 .btn-ghost-sm:hover { color: var(--terra); }
 .btn-fill {
-  font-family: 'Jost', sans-serif; font-size: 9px;
+  font-family: 'Jost', sans-serif; font-size: 11px;
   letter-spacing: .28em; text-transform: uppercase;
   color: var(--moon); background: var(--terra);
-  border: none; padding: 10px 22px; cursor: pointer;
+  border: none; padding: 13px 28px; cursor: pointer;
   text-decoration: none; display: inline-block;
-  transition: background .2s; border-radius: 0;
+  transition: background .2s, transform .15s; border-radius: 0;
+  font-weight: 400;
 }
-.btn-fill:hover { background: var(--ink); }
+.btn-fill:hover { background: var(--ink); transform: translateY(-1px); }
 .nav-ham {
   display: none; flex-direction: column; gap: 5px;
   background: none; border: none; cursor: pointer; padding: 4px;
@@ -181,13 +182,14 @@ nav {
 }
 .hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
 .btn-hero-p {
-  font-family: 'Jost', sans-serif; font-size: 9px;
-  letter-spacing: .3em; text-transform: uppercase;
+  font-family: 'Jost', sans-serif; font-size: 12px;
+  letter-spacing: .32em; text-transform: uppercase;
   color: var(--moon); background: var(--terra); border: none;
-  padding: 13px 32px; cursor: pointer; text-decoration: none;
+  padding: 18px 48px; cursor: pointer; text-decoration: none;
   display: inline-block; transition: background .2s, transform .15s;
+  font-weight: 400; box-shadow: 0 4px 24px rgba(156,122,82,.35);
 }
-.btn-hero-p:hover { background: var(--gold); color: var(--ink); transform: translateY(-1px); }
+.btn-hero-p:hover { background: var(--gold); color: var(--ink); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(156,122,82,.45); }
 .btn-hero-g {
   font-family: 'Jost', sans-serif; font-size: 9px;
   letter-spacing: .3em; text-transform: uppercase;
