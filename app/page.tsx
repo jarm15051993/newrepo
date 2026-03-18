@@ -600,6 +600,7 @@ const bodyHtml = `
   </ul>
   <div class="nav-ctas">
     <a href="#clases" class="btn-ghost-sm">Ver clases</a>
+    <a href="https://docs.google.com/forms/d/e/1FAIpQLSdNJKcAxlZgFPAfZhTcjF57bQTu4iPp9iYn6AAjmml5GxaWZQ/viewform?fbclid=PAdGRleAQnqAtleHRuA2FlbQIxMQBzcnRjBmFwcF9pZA8xMjQwMjQ1NzQyODc0MTQAAadHLeaxoMhBdPPkza04FCJ3KvQh40jZEQXnzJflA6AS-cQ4LKWk_QsYHHgVDw_aem_se1qBnrx2iE7I95LXgd69A&utm_source=ig&utm_medium=social&utm_content=link_in_bio" target="_blank" rel="noopener noreferrer" class="btn-fill">Me interesa</a>
     <!-- <a href="/signup" class="btn-fill">Crea tu cuenta</a> -->
   </div>
   <button class="nav-ham" id="ham" aria-label="Menú">
@@ -632,6 +633,7 @@ const bodyHtml = `
       <span class="hero-pill">Tortosa</span>
     </div>
     <div class="hero-ctas h-a6">
+      <a href="https://docs.google.com/forms/d/e/1FAIpQLSdNJKcAxlZgFPAfZhTcjF57bQTu4iPp9iYn6AAjmml5GxaWZQ/viewform?fbclid=PAdGRleAQnqAtleHRuA2FlbQIxMQBzcnRjBmFwcF9pZA8xMjQwMjQ1NzQyODc0MTQAAadHLeaxoMhBdPPkza04FCJ3KvQh40jZEQXnzJflA6AS-cQ4LKWk_QsYHHgVDw_aem_se1qBnrx2iE7I95LXgd69A&utm_source=ig&utm_medium=social&utm_content=link_in_bio" target="_blank" rel="noopener noreferrer" class="btn-hero-p">Me interesa</a>
       <!-- <a href="/signup" class="btn-hero-p">Crea tu cuenta</a> -->
       <a href="#clases" class="btn-hero-g">Ver clases</a>
     </div>
@@ -917,6 +919,7 @@ const bodyHtml = `
     <h2 class="cierre-h2 rv">Un sitio para moverte,<br>respirar y <em>desconectar</em><br>un rato del día.</h2>
     <p class="cierre-body rv">El bienestar no va de hacerlo perfecto,<br>va de hacerlo constante.</p>
     <div class="cierre-btns rv">
+      <a href="https://docs.google.com/forms/d/e/1FAIpQLSdNJKcAxlZgFPAfZhTcjF57bQTu4iPp9iYn6AAjmml5GxaWZQ/viewform?fbclid=PAdGRleAQnqAtleHRuA2FlbQIxMQBzcnRjBmFwcF9pZA8xMjQwMjQ1NzQyODc0MTQAAadHLeaxoMhBdPPkza04FCJ3KvQh40jZEQXnzJflA6AS-cQ4LKWk_QsYHHgVDw_aem_se1qBnrx2iE7I95LXgd69A&utm_source=ig&utm_medium=social&utm_content=link_in_bio" target="_blank" rel="noopener noreferrer" class="btn-hero-p">Me interesa</a>
       <!-- <a href="/signup" class="btn-hero-p">Crea tu cuenta</a> -->
       <a href="#clases" class="btn-hero-g">Ver clases</a>
     </div>
