@@ -3,25 +3,45 @@ import { prisma } from '@/lib/prisma'
 
 export async function POST() {
   try {
-    // Check if upcoming classes already exist
+    const now = new Date()
+
+    // Always create 2 imminent classes (1h and 1.5h from now) for testing
+    const soon1 = new Date(now.getTime() + 60 * 60 * 1000)       // +1h
+    const soon2 = new Date(now.getTime() + 90 * 60 * 1000)       // +1.5h
+    await prisma.class.createMany({
+      data: [
+        {
+          title: 'Quick Flow',
+          description: 'Short energising session',
+          startTime: soon1,
+          endTime: new Date(soon1.getTime() + 60 * 60 * 1000),
+          capacity: 6,
+          instructor: 'Sarah Martinez',
+        },
+        {
+          title: 'Express Pilates',
+          description: 'Fast-paced lunchtime reset',
+          startTime: soon2,
+          endTime: new Date(soon2.getTime() + 60 * 60 * 1000),
+          capacity: 6,
+          instructor: 'Maria Rodriguez',
+        },
+      ],
+    })
+
+    // Check if the full 7-day schedule already exists
     const existingClasses = await prisma.class.count({
-      where: {
-        startTime: {
-          gte: new Date()
-        }
-      }
+      where: { startTime: { gte: new Date(now.getTime() + 2 * 60 * 60 * 1000) } }
     })
 
     if (existingClasses > 0) {
       return NextResponse.json({
-        message: 'Classes already exist',
-        count: existingClasses
+        message: '2 imminent classes created. 7-day schedule already exists.',
+        imminentCreated: 2,
+        existingUpcoming: existingClasses,
       })
     }
 
-    // Get current date and time
-    const now = new Date()
-    
     // Create classes for the next 7 days
     const classesToCreate = []
     
@@ -80,9 +100,10 @@ export async function POST() {
       data: classesToCreate
     })
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: 'Classes created successfully',
-      count: result.count
+      imminentCreated: 2,
+      weekCreated: result.count,
     })
   } catch (error: any) {
     console.error('Seed error:', error)

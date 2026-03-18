@@ -23,6 +23,7 @@ model User {
   activatedAt         DateTime?
   onboardingCompleted Boolean  @default(false)
   qrCode              String?  @unique
+  isAdmin             Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -90,6 +91,7 @@ model Booking {
   userCreditId    String?
   creditLost      Boolean   @default(false)
   cancelledAt     DateTime?
+  attendedAt      DateTime?
   createdAt       DateTime  @default(now())
 
   user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)

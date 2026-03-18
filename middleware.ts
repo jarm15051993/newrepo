@@ -8,7 +8,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Protect all other /admin and /api/admin routes
+  // Mobile admin API routes: authenticated via JWT Bearer token — let through, route handles auth
+  if (pathname.startsWith('/api/admin') && request.headers.get('authorization')?.startsWith('Bearer ')) {
+    return NextResponse.next()
+  }
+
+  // Protect all other /admin and /api/admin routes (web admin panel — cookie-based)
   if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
     const session = request.cookies.get('admin_session')?.value
     const secret = process.env.ADMIN_SESSION_SECRET
