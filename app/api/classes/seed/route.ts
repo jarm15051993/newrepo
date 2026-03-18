@@ -5,26 +5,42 @@ export async function POST() {
   try {
     const now = new Date()
 
-    // Always create 2 imminent classes (1h and 1.5h from now) for testing
-    const soon1 = new Date(now.getTime() + 60 * 60 * 1000)       // +1h
-    const soon2 = new Date(now.getTime() + 90 * 60 * 1000)       // +1.5h
+    // 3 test classes for validation window testing:
+    // Class A: started 30min ago, ends in 30min → window ACTIVE (currently running)
+    const activeStart = new Date(now.getTime() - 30 * 60 * 1000)
+    const activeEnd   = new Date(now.getTime() + 30 * 60 * 1000)
+    // Class B: starts in 45min → window opened 15min ago, ACTIVE
+    const soonStart = new Date(now.getTime() + 45 * 60 * 1000)
+    const soonEnd   = new Date(soonStart.getTime() + 60 * 60 * 1000)
+    // Class C: starts in 3h → window not open yet, good for "opens at" button state
+    const laterStart = new Date(now.getTime() + 3 * 60 * 60 * 1000)
+    const laterEnd   = new Date(laterStart.getTime() + 60 * 60 * 1000)
+
     await prisma.class.createMany({
       data: [
         {
           title: 'Quick Flow',
           description: 'Short energising session',
-          startTime: soon1,
-          endTime: new Date(soon1.getTime() + 60 * 60 * 1000),
+          startTime: activeStart,
+          endTime: activeEnd,
           capacity: 6,
           instructor: 'Sarah Martinez',
         },
         {
           title: 'Express Pilates',
           description: 'Fast-paced lunchtime reset',
-          startTime: soon2,
-          endTime: new Date(soon2.getTime() + 60 * 60 * 1000),
+          startTime: soonStart,
+          endTime: soonEnd,
           capacity: 6,
           instructor: 'Maria Rodriguez',
+        },
+        {
+          title: 'Evening Unwind',
+          description: 'Relax and restore after a long day',
+          startTime: laterStart,
+          endTime: laterEnd,
+          capacity: 6,
+          instructor: 'Ana Lopez',
         },
       ],
     })
