@@ -5,7 +5,6 @@ import "./globals.css";
 const playfair = Playfair_Display({
   variable: "--font-playfair",
   subsets: ["latin"],
-  weight: ["400", "500"],
   style: ["normal", "italic"],
 });
 
@@ -16,8 +15,8 @@ const jost = Jost({
 });
 
 export const metadata: Metadata = {
-  title: "OOMA Wellness Club",
-  description: "El cuerpo es tu obra maestra.",
+  title: "OOMA Wellness Club — Tortosa",
+  description: "Movimiento consciente. Bienestar real. Comunidad. Pilates Reformer y Yoga en Tortosa, Terres de l'Ebre.",
 };
 
 export default function RootLayout({
