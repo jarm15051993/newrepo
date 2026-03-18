@@ -9,9 +9,13 @@ function ActivateContent() {
   const searchParams = useSearchParams()
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const [message, setMessage] = useState('')
+  const [appDeepLink, setAppDeepLink] = useState<string | null>(null)
 
   useEffect(() => {
     const token = searchParams.get('token')
+    const email = searchParams.get('email') ?? ''
+    const platform = searchParams.get('platform')
+
     if (!token) {
       setStatus('error')
       setMessage('Invalid activation link.')
@@ -25,13 +29,25 @@ function ActivateContent() {
           setStatus('error')
           setMessage(data.error)
         } else if (data.onboardingCompleted) {
-          setStatus('success')
-          setMessage('Account already activated. Redirecting to login…')
-          setTimeout(() => router.push('/login'), 2000)
+          if (platform === 'mobile') {
+            setStatus('success')
+            setMessage('Account already activated.')
+            setAppDeepLink(`ooma://login`)
+          } else {
+            setStatus('success')
+            setMessage('Account already activated. Redirecting to login…')
+            setTimeout(() => router.push('/login'), 2000)
+          }
         } else if (data.userId) {
-          setStatus('success')
-          setMessage(data.message || 'Account activated successfully!')
-          setTimeout(() => router.push(`/onboarding?userId=${data.userId}`), 1500)
+          if (platform === 'mobile') {
+            setStatus('success')
+            setMessage('Account activated!')
+            setAppDeepLink(`ooma://complete-profile?userId=${data.userId}&email=${encodeURIComponent(email)}`)
+          } else {
+            setStatus('success')
+            setMessage(data.message || 'Account activated successfully!')
+            setTimeout(() => router.push(`/onboarding?userId=${data.userId}`), 1500)
+          }
         } else {
           setStatus('error')
           setMessage('Something went wrong. Please try again.')
@@ -63,7 +79,16 @@ function ActivateContent() {
               </svg>
             </div>
             <p className="text-green-700 font-medium text-lg">{message}</p>
-            <p className="text-mgray text-sm mt-2">Just a moment…</p>
+            {appDeepLink ? (
+              <a
+                href={appDeepLink}
+                className="mt-6 inline-block px-8 py-3 bg-ink text-white font-medium rounded-lg tracking-widest text-sm uppercase hover:bg-burg transition"
+              >
+                Open Ooma App
+              </a>
+            ) : (
+              <p className="text-mgray text-sm mt-2">Just a moment…</p>
+            )}
           </>
         )}
 

@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     const appUrl = getAppUrl()
     const activationLink = platform === 'mobile'
-      ? `ooma://activate?token=${activationToken}&email=${encodeURIComponent(email)}`
+      ? `${appUrl}/activate?token=${activationToken}&email=${encodeURIComponent(email)}&platform=mobile`
       : `${appUrl}/activate?token=${activationToken}`
 
     try {
