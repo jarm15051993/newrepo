@@ -8,7 +8,14 @@ export async function POST(request: NextRequest) {
     const token = extractBearerToken(request.headers.get('authorization'))
     if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const payload = await verifyToken(token)
-    const userId = payload.userId
+
+    const tenantUserId = request.headers.get('x-tenant-user-id')
+    if (tenantUserId && !payload.isAdmin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const adminId = tenantUserId ? payload.userId : null
+    const userId = tenantUserId ?? payload.userId
 
     const { classId } = await request.json()
     if (!classId) return NextResponse.json({ error: 'classId is required' }, { status: 400 })
@@ -36,7 +43,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'You are already booked for this class.' }, { status: 400 })
     }
 
-    // Find oldest active UserCredit
     const now = new Date()
     const activeCredits = await prisma.userCredit.findMany({
       where: {
@@ -56,7 +62,6 @@ export async function POST(request: NextRequest) {
 
     const creditToUse = activeCredits[0]
 
-    // Find available reformer number
     const bookedNumbers = cls.bookings.map(b => b.stretcherNumber)
     const availableReformer = [1, 2, 3, 4, 5, 6].find(n => !bookedNumbers.includes(n))
     if (!availableReformer) {
@@ -95,10 +100,21 @@ export async function POST(request: NextRequest) {
         data: { bookedCount: { increment: 1 } },
       })
 
+      if (adminId) {
+        await tx.adminAuditLog.create({
+          data: {
+            adminId,
+            targetUserId: userId,
+            action: 'BOOK_CLASS',
+            metadata: { classId, bookingId: newBooking.id, userCreditId: creditToUse.id },
+          },
+        })
+      }
+
       return newBooking
     })
 
-    // Fire-and-forget confirmation email
+    // Confirmation email → always goes to the target user
     prisma.user.findUnique({ where: { id: userId }, select: { email: true, name: true } })
       .then(user => {
         if (!user) return

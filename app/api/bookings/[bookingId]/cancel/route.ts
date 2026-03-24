@@ -11,7 +11,14 @@ export async function PATCH(
     const token = extractBearerToken(request.headers.get('authorization'))
     if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const payload = await verifyToken(token)
-    const userId = payload.userId
+
+    const tenantUserId = request.headers.get('x-tenant-user-id')
+    if (tenantUserId && !payload.isAdmin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const adminId = tenantUserId ? payload.userId : null
+    const effectiveUserId = tenantUserId ?? payload.userId
 
     const { bookingId } = await params
 
@@ -20,7 +27,7 @@ export async function PATCH(
       include: { class: true },
     })
 
-    if (!booking || booking.userId !== userId) {
+    if (!booking || booking.userId !== effectiveUserId) {
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 })
     }
 
@@ -30,17 +37,12 @@ export async function PATCH(
 
     const now = new Date()
     const hoursUntilClass = (booking.class.startTime.getTime() - now.getTime()) / 3600000
-    const isLateCancellation = hoursUntilClass < 1
-    const creditLost = isLateCancellation
+    const creditLost = hoursUntilClass < 1
 
     const updatedBooking = await prisma.$transaction(async tx => {
       const updated = await tx.booking.update({
         where: { id: bookingId },
-        data: {
-          status: 'cancelled',
-          creditLost,
-          cancelledAt: now,
-        },
+        data: { status: 'cancelled', creditLost, cancelledAt: now },
         include: { class: true },
       })
 
@@ -49,7 +51,6 @@ export async function PATCH(
         data: { bookedCount: { decrement: 1 } },
       })
 
-      // Return credit only on eligible cancellation and if linked to a UserCredit
       if (!creditLost && booking.userCreditId) {
         await tx.userCredit.update({
           where: { id: booking.userCreditId },
@@ -57,11 +58,22 @@ export async function PATCH(
         })
       }
 
+      if (adminId) {
+        await tx.adminAuditLog.create({
+          data: {
+            adminId,
+            targetUserId: effectiveUserId,
+            action: 'CANCEL_BOOKING',
+            metadata: { bookingId, classId: booking.classId, creditLost },
+          },
+        })
+      }
+
       return updated
     })
 
-    // Fire-and-forget cancellation email
-    prisma.user.findUnique({ where: { id: userId }, select: { email: true, name: true } })
+    // Cancellation email → always to the target user
+    prisma.user.findUnique({ where: { id: effectiveUserId }, select: { email: true, name: true } })
       .then(user => {
         if (!user) return
         const date = updatedBooking.class.startTime.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
@@ -72,7 +84,7 @@ export async function PATCH(
         return sendEmail({
           to: user.email,
           type: 'booking_cancellation',
-          userId,
+          userId: effectiveUserId,
           vars: { name: user.name ?? 'there', classTitle: updatedBooking.class.title, date, time, creditNote },
         })
       })
