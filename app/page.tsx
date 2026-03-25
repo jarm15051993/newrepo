@@ -946,7 +946,7 @@ const bodyHtml = `
       <span class="footer-col-title">Contacto</span>
       <p style="font-size:12.5px;color:var(--mgray);line-height:2.0;font-weight:300;">
         Tortosa, Terres de l'Ebre<br>
-        <a href="mailto:hola@oomawellness.shop" style="color:var(--terra);text-decoration:none;">hola@oomawellness.shop</a>
+        <a href="mailto:admin@oomawellness.shop" style="color:var(--terra);text-decoration:none;">admin@oomawellness.shop</a>
         <!-- <a href="/signup" style="color:var(--terra);text-decoration:none;">Crea tu cuenta →</a> -->
       </p>
     </div>
