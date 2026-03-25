@@ -108,10 +108,10 @@ export async function POST(request: NextRequest) {
       // Re-query taken stretcher numbers inside the transaction to avoid race conditions.
       // Include all non-cancelled statuses (confirmed + attended).
       const takenStretchers = await tx.booking.findMany({
-        where: { classId, status: { in: ['confirmed', 'attended'] } },
+        where: { classId, status: { in: ['confirmed', 'attended'] }, stretcherNumber: { not: null } },
         select: { stretcherNumber: true }
       })
-      const takenNumbers = takenStretchers.map(b => b.stretcherNumber)
+      const takenNumbers = takenStretchers.map(b => b.stretcherNumber as number)
       const availableReformer = [1, 2, 3, 4, 5, 6].find(num => !takenNumbers.includes(num))
 
       if (!availableReformer) {

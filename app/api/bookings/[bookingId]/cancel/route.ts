@@ -42,8 +42,8 @@ export async function PATCH(
     const updatedBooking = await prisma.$transaction(async tx => {
       const updated = await tx.booking.update({
         where: { id: bookingId },
-        data: { status: 'cancelled', creditLost, cancelledAt: now },
-        include: { class: true },
+        data: { status: 'cancelled', stretcherNumber: null, creditLost, cancelledAt: now },
+        include: { class: true, user: true },
       })
 
       await tx.class.update({

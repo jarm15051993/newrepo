@@ -23,7 +23,10 @@ export async function POST(request: NextRequest) {
     const cls = await prisma.class.findUnique({
       where: { id: classId },
       include: {
-        bookings: { where: { status: 'confirmed' }, select: { stretcherNumber: true } },
+        bookings: {
+          where: { status: { in: ['confirmed', 'attended'] }, stretcherNumber: { not: null } },
+          select: { stretcherNumber: true },
+        },
       },
     })
 

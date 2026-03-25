@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     })
 
     // If userId provided, fetch their bookings for these classes in one query
-    const userBookingMap: Record<string, number> = {}
+    const userBookingMap: Record<string, number | null> = {}
     if (userId && classes.length > 0) {
       const userBookings = await prisma.booking.findMany({
         where: {
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
         select: { classId: true, stretcherNumber: true }
       })
       for (const b of userBookings) {
-        userBookingMap[b.classId] = b.stretcherNumber
+        userBookingMap[b.classId] = b.stretcherNumber ?? null
       }
     }
 

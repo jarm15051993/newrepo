@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Fetch user's confirmed bookings for these classes in one query
-    const userBookingMap: Record<string, { stretcherNumber: number; bookingId: string }> = {}
+    const userBookingMap: Record<string, { stretcherNumber: number | null; bookingId: string }> = {}
     if (classes.length > 0) {
       const userBookings = await prisma.booking.findMany({
         where: {
