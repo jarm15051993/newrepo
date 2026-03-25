@@ -86,10 +86,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Fetch class to check capacity via bookedCount
+    // Fetch class capacity — stretcher assignment happens inside the transaction
     const cls = await prisma.class.findUnique({
       where: { id: classId },
-      select: { bookedCount: true, capacity: true, bookings: { select: { stretcherNumber: true }, where: { status: 'confirmed' } } }
+      select: { bookedCount: true, capacity: true }
     })
 
     if (!cls) {
@@ -103,19 +103,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Find available reformer number
-    const bookedNumbers = cls.bookings.map(b => b.stretcherNumber)
-    const availableReformer = [1, 2, 3, 4, 5, 6].find(num => !bookedNumbers.includes(num))
-
-    if (!availableReformer) {
-      return NextResponse.json(
-        { error: 'No reformers available' },
-        { status: 400 }
-      )
-    }
-
     // Create booking, deduct credit, and increment bookedCount in a transaction
     const result = await prisma.$transaction(async (tx) => {
+      // Re-query taken stretcher numbers inside the transaction to avoid race conditions.
+      // Include all non-cancelled statuses (confirmed + attended).
+      const takenStretchers = await tx.booking.findMany({
+        where: { classId, status: { in: ['confirmed', 'attended'] } },
+        select: { stretcherNumber: true }
+      })
+      const takenNumbers = takenStretchers.map(b => b.stretcherNumber)
+      const availableReformer = [1, 2, 3, 4, 5, 6].find(num => !takenNumbers.includes(num))
+
+      if (!availableReformer) {
+        throw new Error('No reformers available')
+      }
+
       // Create booking
       const booking = await tx.booking.create({
         data: {
