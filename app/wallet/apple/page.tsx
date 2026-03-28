@@ -79,7 +79,7 @@ export default async function WalletApplePage({
                   // When Wallet sheet is dismissed, auto-redirect back to app
                   document.addEventListener('visibilitychange', function() {
                     if (triggered && document.visibilityState === 'visible') {
-                      window.location.href = 'ooma://';
+                      window.location.href = 'ooma://wallet-added';
                     }
                   });
                 `,
