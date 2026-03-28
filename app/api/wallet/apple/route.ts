@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
       }
     )
 
-    const buffer = pass.getAsBuffer()
+    const buffer = await pass.getAsBuffer()
 
     return new NextResponse(new Uint8Array(buffer), {
       headers: {
