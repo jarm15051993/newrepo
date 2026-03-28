@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       .setExpirationTime('5m')
       .sign(walletSecret)
 
-    const url = `${process.env.NEXT_PUBLIC_APP_URL}/api/wallet/apple?token=${walletToken}`
+    const url = `${process.env.NEXT_PUBLIC_APP_URL}/wallet/apple?token=${walletToken}`
     return NextResponse.json({ url })
   } catch (error: any) {
     console.error('[wallet/apple POST]', error?.message)
