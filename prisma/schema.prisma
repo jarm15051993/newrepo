@@ -43,8 +43,9 @@ model User {
   payments            Payment[]
   passwordResetTokens PasswordResetToken[]
   emailLogs           EmailLog[]
-  adminLogsAsAdmin    AdminAuditLog[] @relation("AdminLogs")
-  adminLogsAsTarget   AdminAuditLog[] @relation("TargetLogs")
+  adminLogsAsAdmin         AdminAuditLog[] @relation("AdminLogs")
+  adminLogsAsTarget        AdminAuditLog[] @relation("TargetLogs")
+  notificationPreferences  NotificationPreference[]
 }
 
 model Package {
@@ -170,6 +171,19 @@ model AdminAuditLog {
   action       String
   metadata     Json?
   performedAt  DateTime @default(now())
+}
+
+// One row per (userId, type) — add new types as new rows, no schema change needed
+model NotificationPreference {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // 'booking_confirmation' | 'booking_cancellation' | 'package_purchase'
+  enabled   Boolean  @default(true)
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type])
 }
 
 model EmailLog {
