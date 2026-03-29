@@ -31,7 +31,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
     }
 
-    const token = await signToken({ userId: user.id, email: user.email, isAdmin: user.isAdmin })
+    const isOwner = user.role === 'OWNER'
+
+    const token = await signToken({
+      userId: user.id,
+      email: user.email,
+      isAdmin: user.role === 'ADMIN' || isOwner, // deprecated compat
+      role: user.role,
+      canCreateClass: isOwner || user.canCreateClass,
+      canViewStudents: isOwner || user.canViewStudents,
+      canValidateAttendance: isOwner || user.canValidateAttendance,
+    })
+
     const { password: _, isAdmin: __, ...userWithoutPassword } = user
 
     return NextResponse.json({ token, user: userWithoutPassword }, { status: 200 })

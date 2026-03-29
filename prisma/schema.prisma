@@ -8,6 +8,12 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum UserRole {
+  USER
+  ADMIN
+  OWNER
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -23,7 +29,11 @@ model User {
   activatedAt         DateTime?
   onboardingCompleted Boolean  @default(false)
   qrCode              String?  @unique
-  isAdmin             Boolean  @default(false)
+  isAdmin               Boolean  @default(false) // deprecated — use role
+  role                  UserRole @default(USER)
+  canCreateClass        Boolean  @default(false)
+  canViewStudents       Boolean  @default(false)
+  canValidateAttendance Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

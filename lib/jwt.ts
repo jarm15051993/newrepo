@@ -6,10 +6,22 @@ const EXPIRES_IN = '7d'
 export interface TokenPayload extends JWTPayload {
   userId: string
   email: string
-  isAdmin: boolean
+  isAdmin: boolean // deprecated — use role
+  role: string
+  canCreateClass: boolean
+  canViewStudents: boolean
+  canValidateAttendance: boolean
 }
 
-export async function signToken(payload: { userId: string; email: string; isAdmin: boolean }): Promise<string> {
+export async function signToken(payload: {
+  userId: string
+  email: string
+  isAdmin: boolean
+  role: string
+  canCreateClass: boolean
+  canViewStudents: boolean
+  canValidateAttendance: boolean
+}): Promise<string> {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()

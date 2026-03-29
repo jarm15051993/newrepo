@@ -8,18 +8,27 @@ export async function GET(request: NextRequest) {
     if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const payload = await verifyToken(token)
-    if (!payload.isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    if (!payload.canViewStudents && payload.role !== 'OWNER') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
 
     const q = request.nextUrl.searchParams.get('q')?.trim() ?? ''
     if (q.length < 3) {
-      return NextResponse.json({ error: 'Query must be at least 3 characters.' }, { status: 400 })
+      return NextResponse.json([])
     }
 
     const users = await prisma.user.findMany({
       where: {
-        OR: [
-          { email: { equals: q, mode: 'insensitive' } },
-          { phone: { contains: q } },
+        AND: [
+          { role: 'USER' },
+          {
+            OR: [
+              { email: { contains: q, mode: 'insensitive' } },
+              { phone: { contains: q } },
+              { name: { contains: q, mode: 'insensitive' } },
+              { lastName: { contains: q, mode: 'insensitive' } },
+            ],
+          },
         ],
       },
       select: {
@@ -31,6 +40,7 @@ export async function GET(request: NextRequest) {
         onboardingCompleted: true,
       },
       take: 10,
+      orderBy: { name: 'asc' },
     })
 
     const results = users.map(u => ({
