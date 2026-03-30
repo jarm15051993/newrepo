@@ -24,7 +24,7 @@ export default function EmailUpdatedPage() {
           Your email address has been updated. You can now close this page and go back to the Ooma App.
         </p>
 
-        <a href="ooma://" style={styles.button}>
+        <a href="ooma://email-updated" style={styles.button}>
           Back to Ooma
         </a>
       </div>
