@@ -32,5 +32,5 @@ export async function GET(request: NextRequest) {
     },
   })
 
-  return NextResponse.redirect(new URL(`${appUrl}/?message=email-updated`))
+  return NextResponse.redirect(new URL('/email-updated', request.nextUrl.origin))
 }
