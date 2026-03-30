@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
       canCreateClass: isOwner || user.canCreateClass,
       canViewStudents: isOwner || user.canViewStudents,
       canValidateAttendance: isOwner || user.canValidateAttendance,
+      canBulkUpload: isOwner || user.canBulkUpload,
     })
 
     const { password: _, isAdmin: __, ...userWithoutPassword } = user

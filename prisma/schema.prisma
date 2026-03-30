@@ -34,6 +34,9 @@ model User {
   canCreateClass        Boolean  @default(false)
   canViewStudents       Boolean  @default(false)
   canValidateAttendance Boolean  @default(false)
+  canBulkUpload         Boolean  @default(false)
+  disclaimerAcceptedAt  DateTime?
+  disclaimerVersion     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
