@@ -179,6 +179,35 @@ const templates = [
 </div>
 `.trim(),
   },
+  {
+    type: 'email_verification',
+    subject: 'Verify your new email address',
+    htmlBody: `
+<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #000; color: #fff; padding: 40px; border-radius: 12px;">
+  <h1 style="color: #fbbf24; text-align: center; margin-bottom: 8px;">OOMA Wellness Club</h1>
+  <p style="color: #9ca3af; text-align: center; margin-bottom: 32px;">Email Verification</p>
+
+  <p style="color: #fff; font-size: 16px;">Hi {{name}},</p>
+  <p style="color: #d1d5db; font-size: 16px; line-height: 1.6;">
+    You requested to change your email address to <strong style="color: #fbbf24;">{{newEmail}}</strong>.
+    Click the button below to confirm this change. This link expires in <strong style="color: #fbbf24;">24 hours</strong>.
+  </p>
+
+  <div style="text-align: center; margin: 36px 0;">
+    <a href="{{link}}" style="background: #fbbf24; color: #000; font-weight: 700; font-size: 16px; padding: 14px 32px; border-radius: 8px; text-decoration: none; display: inline-block;">
+      Verify Email Address
+    </a>
+  </div>
+
+  <p style="color: #6b7280; font-size: 13px; text-align: center;">
+    If you didn't request this change, you can safely ignore this email. Your current email will remain unchanged.
+  </p>
+  <p style="color: #6b7280; font-size: 13px; text-align: center;">
+    If the button doesn't work, copy and paste this link: <a href="{{link}}" style="color: #fbbf24;">{{link}}</a>
+  </p>
+</div>
+`.trim(),
+  },
 ]
 
 async function main() {

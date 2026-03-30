@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json()
-    const { userId, name, lastName, email, phone, birthday, additionalInfo } = body
+    const { userId, name, lastName, email, phone, birthday, goals, additionalInfo } = body
 
     if (!userId) {
       return NextResponse.json({ error: 'userId required' }, { status: 400 })
@@ -38,6 +38,7 @@ export async function PATCH(request: NextRequest) {
         ...(email !== undefined && { email: email.trim().toLowerCase() }),
         ...(phone !== undefined && { phone: phone.trim() }),
         ...(birthday !== undefined && { birthday: new Date(birthday) }),
+        ...(goals !== undefined && { goals: goals.trim() || null }),
         ...(additionalInfo !== undefined && { additionalInfo: additionalInfo.trim() || null }),
       },
       select: {
@@ -47,6 +48,7 @@ export async function PATCH(request: NextRequest) {
         lastName: true,
         phone: true,
         birthday: true,
+        goals: true,
         additionalInfo: true,
         profilePicture: true,
       },
