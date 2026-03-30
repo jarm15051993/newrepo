@@ -5,7 +5,7 @@ import { sendEmail } from '@/lib/email'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
     const token = extractBearerToken(request.headers.get('authorization'))
@@ -17,8 +17,9 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
+    const { userId } = await params
     const user = await prisma.user.findUnique({
-      where: { id: params.userId },
+      where: { id: userId },
       select: { isStudent: true },
     })
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
@@ -32,7 +33,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
     const token = extractBearerToken(request.headers.get('authorization'))
@@ -51,7 +52,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const { userId } = params
+    const { userId } = await params
     const { isStudent } = await request.json()
     if (typeof isStudent !== 'boolean') {
       return NextResponse.json({ error: 'isStudent must be a boolean' }, { status: 400 })
