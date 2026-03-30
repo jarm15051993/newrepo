@@ -219,6 +219,22 @@ async function main() {
     })
     console.log(`Seeded template: ${template.type}`)
   }
+
+  // Welcome gift package — 1 free class, no price, no Stripe price, no expiry enforced at credit level
+  await prisma.package.upsert({
+    where: { stripePriceId: '__early_member_gift__' },
+    update: {},
+    create: {
+      name: 'Early Member Free Class',
+      description: 'A complimentary class for early members of OOMA Wellness Club.',
+      classCount: 1,
+      price: 0,
+      active: false, // not purchasable — only granted via the claim endpoint
+      durationDays: 0,
+      stripePriceId: '__early_member_gift__',
+    },
+  })
+  console.log('Seeded package: Early Member Free Class')
 }
 
 main()
