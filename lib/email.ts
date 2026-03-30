@@ -8,6 +8,13 @@ function getResend(): Resend {
 }
 const FROM = process.env.EMAIL_FROM || 'OOMA Wellness Club <noreply@oomawellness.com>'
 
+// Types the user can opt out of — system emails (activation, password_reset) always send
+const PREFERENCE_CONTROLLED_TYPES = new Set([
+  'booking_confirmation',
+  'booking_cancellation',
+  'package_purchase',
+])
+
 function applyPlaceholders(template: string, vars: Record<string, string>): string {
   return Object.entries(vars).reduce(
     (acc, [key, value]) => acc.replaceAll(`{{${key}}}`, value),
@@ -25,6 +32,16 @@ interface SendEmailOptions {
 }
 
 export async function sendEmail({ to, type, userId, vars, metadata, attachments }: SendEmailOptions): Promise<void> {
+  // Check notification preference for controllable email types
+  if (userId && PREFERENCE_CONTROLLED_TYPES.has(type)) {
+    const pref = await prisma.notificationPreference.findUnique({
+      where: { userId_type: { userId, type } },
+    })
+    // If a preference row exists and is disabled, skip silently
+    if (pref && !pref.enabled) return
+    // If no row exists, default is On — continue sending
+  }
+
   // Fetch template from DB
   const template = await prisma.emailTemplate.findUnique({ where: { type } })
   if (!template) {
@@ -44,14 +61,12 @@ export async function sendEmail({ to, type, userId, vars, metadata, attachments 
     }
   } catch (err) {
     status = 'failed'
-    // Log before re-throwing
     prisma.emailLog.create({
       data: { userId: userId ?? null, to, type, subject, status, metadata: metadata ? (metadata as any) : undefined },
     }).catch(e => console.error('[email] Failed to write EmailLog:', e))
     throw err
   }
 
-  // Log to EmailLog (fire-and-forget — don't throw if logging fails)
   prisma.emailLog.create({
     data: {
       userId: userId ?? null,

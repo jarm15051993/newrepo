@@ -180,7 +180,7 @@ model AdminAuditLog {
 model NotificationPreference {
   id        String   @id @default(cuid())
   userId    String
-  type      String
+  type      String   // 'booking_confirmation' | 'booking_cancellation' | 'package_purchase'
   enabled   Boolean  @default(true)
   updatedAt DateTime @updatedAt
 
