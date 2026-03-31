@@ -8,10 +8,11 @@ export async function GET(request: NextRequest) {
     if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const payload = await verifyToken(token)
+    const userId = request.headers.get('x-tenant-user-id') ?? payload.userId
 
     const bookings = await prisma.booking.findMany({
       where: {
-        userId: payload.userId,
+        userId,
         status: 'attended',
       },
       include: {

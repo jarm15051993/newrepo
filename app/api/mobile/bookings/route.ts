@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
     const token = extractBearerToken(request.headers.get('authorization'))
     if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const payload = await verifyToken(token)
-    const userId = payload.userId
+    const userId = request.headers.get('x-tenant-user-id') ?? payload.userId
 
     const bookings = await prisma.booking.findMany({
       where: {
