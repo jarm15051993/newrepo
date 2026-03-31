@@ -276,7 +276,12 @@ async function main() {
     '__early_member_gift__',
   ]
   await prisma.package.updateMany({
-    where: { stripePriceId: { notIn: knownPriceIds } },
+    where: {
+      OR: [
+        { stripePriceId: null },
+        { stripePriceId: { notIn: knownPriceIds } },
+      ],
+    },
     data: { active: false },
   })
   console.log('Deactivated legacy packages')
