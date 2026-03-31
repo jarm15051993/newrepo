@@ -265,6 +265,22 @@ async function main() {
     console.log(`Seeded template: ${template.type}`)
   }
 
+  // ─── Deactivate any legacy packages not in the known set ───────────────────
+  const knownPriceIds = [
+    'price_1TGpCLKfNoZ8iddxSCDC4dTo',
+    'price_1TGpFxKfNoZ8iddxOAhkOeuM',
+    'price_1TGpH2KfNoZ8iddxeY9gERze',
+    'price_1TGpCvKfNoZ8iddxNGv2fOhq',
+    'price_1TGpGPKfNoZ8iddxHKBmgnxy',
+    'price_1TGpIEKfNoZ8iddxzsvx13qU',
+    '__early_member_gift__',
+  ]
+  await prisma.package.updateMany({
+    where: { stripePriceId: { notIn: knownPriceIds } },
+    data: { active: false },
+  })
+  console.log('Deactivated legacy packages')
+
   // ─── Regular packages ──────────────────────────────────────────────────────
   // stripePriceId values are placeholders — owner must create Stripe products and replace before go-live
   const regularPackages = [

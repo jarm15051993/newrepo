@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 
     const result = packages.map(pkg => ({
       ...pkg,
-      isPurchasable: pkg.isStudentPackage ? user.isStudent : true,
+      isPurchasable: pkg.isStudentPackage ? user.isStudent : !user.isStudent,
     }))
 
     return NextResponse.json({ packages: result })
