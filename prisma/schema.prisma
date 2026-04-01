@@ -40,6 +40,7 @@ model User {
   canBulkUpload         Boolean  @default(false)
   canMarkAsStudent      Boolean  @default(false)
   isStudent             Boolean  @default(false)
+  isBeta                Boolean  @default(false)
   disclaimerAcceptedAt  DateTime?
   disclaimerVersion     String?
   createdAt DateTime @default(now())

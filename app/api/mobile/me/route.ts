@@ -25,6 +25,8 @@ export async function GET(request: NextRequest) {
         activatedAt: true,
         createdAt: true,
         updatedAt: true,
+        isBeta: true,
+        role: true,
       }
     })
 
@@ -32,7 +34,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    return NextResponse.json({ user }, { status: 200 })
+    const { role, ...userFields } = user
+    const isBeta = role === 'ADMIN' || role === 'OWNER' ? false : user.isBeta
+
+    return NextResponse.json({ user: { ...userFields, isBeta } }, { status: 200 })
   } catch (error) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
