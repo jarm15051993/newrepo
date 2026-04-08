@@ -683,9 +683,12 @@ footer {
   .res-steps { grid-template-columns: 1fr 1fr; }
   .res-planes { grid-template-columns: 1fr; }
   .tarifas { padding: 72px 28px 60px; }
-  .individ-grid { grid-template-columns: 1fr; }
+  .individ-grid { grid-template-columns: 1fr; gap: 0; }
+  .individ-grid .plan-card:not(:last-child) { border-bottom: 1px solid var(--rule); }
   .tarifas-footer { flex-direction: column; align-items: flex-start; }
-  .plan-table thead th, .plan-table td { padding: 12px 20px; }
+  .plan-card-head { height: auto !important; padding: 24px 20px 20px; }
+  .plan-table thead th, .plan-table td { padding: 12px 16px; }
+  .plan-table thead th { white-space: nowrap; }
   .pack-bar { flex-wrap: wrap; }
   .acc-grid { grid-template-columns: 1fr; }
   #acceso { padding: 72px 28px; }
