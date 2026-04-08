@@ -611,9 +611,14 @@ export default function DashboardPage() {
         {/* Header */}
         <div className="flex justify-between items-center mb-1">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="OOMA Wellness" className="h-[560px] w-auto -mt-[200px] -mb-[220px] -ml-[45px]" style={{ mixBlendMode: 'multiply' }} />
+          <img
+            src="/logo.png"
+            alt="OOMA Wellness"
+            className="h-[280px] w-auto -mt-[100px] -mb-[110px] -ml-[22px] sm:h-[560px] sm:-mt-[200px] sm:-mb-[220px] sm:-ml-[45px]"
+            style={{ mixBlendMode: 'multiply' }}
+          />
           <button onClick={handleLogout}
-            className="px-4 py-2 border border-rule text-mgray hover:border-burg hover:text-burg rounded-lg transition text-sm tracking-wide">
+            className="px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm border border-rule text-mgray hover:border-burg hover:text-burg rounded-lg transition tracking-wide">
             Logout
           </button>
         </div>
