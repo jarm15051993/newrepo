@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
         goals: true,
         additionalInfo: true,
         profilePicture: true,
+        qrCode: true,
         userGoals: {
           select: { goalId: true, goal: { select: { label: true } } },
           orderBy: { goal: { sortOrder: 'asc' } },
@@ -29,13 +30,20 @@ export async function GET(request: NextRequest) {
 
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-    const { userGoals, goals, ...rest } = user
+    // Backfill qrCode for users who completed onboarding before this field existed
+    let qrCode = user.qrCode
+    if (!qrCode) {
+      qrCode = crypto.randomUUID()
+      await prisma.user.update({ where: { id: payload.userId }, data: { qrCode } })
+    }
+
+    const { userGoals, goals, qrCode: _qr, ...rest } = user
     const userGoalIds = userGoals.map(ug => ug.goalId)
     const goalsDisplay = userGoals.length > 0
       ? userGoals.map(ug => ug.goal.label).join(', ')
       : goals
 
-    return NextResponse.json({ user: { ...rest, goals: goalsDisplay, userGoalIds } })
+    return NextResponse.json({ user: { ...rest, qrCode, goals: goalsDisplay, userGoalIds } })
   } catch {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }

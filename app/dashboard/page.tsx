@@ -407,6 +407,15 @@ export default function DashboardPage() {
           fetch('/api/mobile/goals')
             .then(r => r.json())
             .then(d => { if (Array.isArray(d)) setAvailableGoals(d) }),
+          fetch(`/api/user/qr?userId=${parsedUser.id}`)
+            .then(r => r.json())
+            .then(d => {
+              if (d.qrCode && !parsedUser.qrCode) {
+                const updated = { ...parsedUser, qrCode: d.qrCode }
+                localStorage.setItem('user', JSON.stringify(updated))
+                setUser(updated)
+              }
+            }),
         ])
       } catch (error) {
         console.error('Error fetching data:', error)
@@ -727,7 +736,7 @@ export default function DashboardPage() {
               <div className="flex flex-wrap gap-2">
                 {userGoalIds.length > 0
                   ? availableGoals.filter(g => userGoalIds.includes(g.id)).map(g => (
-                      <span key={g.id} className="px-3 py-1 rounded-full border border-mgray text-mgray text-sm">{g.label}</span>
+                      <span key={g.id} className="px-3 py-1 rounded-full bg-burg text-warm-white text-sm">{g.label}</span>
                     ))
                   : <p className="text-ink text-base">{user.goals ?? '—'}</p>
                 }

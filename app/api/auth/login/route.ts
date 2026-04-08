@@ -56,6 +56,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Backfill qrCode for users who registered before this field existed
+    let qrCode = user.qrCode
+    if (!qrCode) {
+      qrCode = crypto.randomUUID()
+      await prisma.user.update({ where: { id: user.id }, data: { qrCode } })
+    }
+
     // Return only safe, non-sensitive fields — never expose health data, isAdmin, tokens
     return NextResponse.json(
       {
@@ -69,6 +76,7 @@ export async function POST(request: NextRequest) {
           profilePicture: user.profilePicture,
           onboardingCompleted: user.onboardingCompleted,
           createdAt: user.createdAt,
+          qrCode,
         },
       },
       { status: 200 }

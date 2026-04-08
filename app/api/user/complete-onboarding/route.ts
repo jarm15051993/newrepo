@@ -61,6 +61,7 @@ export async function PATCH(request: NextRequest) {
           additionalInfo: additionalInfo || null,
           onboardingCompleted: true,
           activatedAt: user.activatedAt ?? new Date(),
+          qrCode: user.qrCode ?? crypto.randomUUID(),
         },
       })
       if (usingGoalIds) {
