@@ -3,6 +3,7 @@ import Stripe from 'stripe'
 import { verifyToken, extractBearerToken } from '@/lib/jwt'
 import { prisma } from '@/lib/prisma'
 import { sendEmail } from '@/lib/email'
+import { triggerWalletPassUpdate } from '@/lib/wallet'
 
 export async function POST(request: NextRequest) {
   try {
@@ -54,6 +55,10 @@ export async function POST(request: NextRequest) {
         expiresAt,
       },
     })
+
+    triggerWalletPassUpdate(userId).catch(err =>
+      console.error('[payment-confirm] Wallet sync failed:', err)
+    )
 
     // Fire-and-forget purchase confirmation email
     const packageName = intent.metadata.packageName ?? `${classes} Class Pack`

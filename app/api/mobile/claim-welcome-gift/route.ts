@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken, extractBearerToken } from '@/lib/jwt'
+import { triggerWalletPassUpdate } from '@/lib/wallet'
 
 const WELCOME_GIFT_PACKAGE_NAME = 'Early Member Free Class'
 
@@ -42,6 +43,10 @@ export async function POST(request: NextRequest) {
         stripePaymentId: null,
       },
     })
+
+    triggerWalletPassUpdate(userId).catch(err =>
+      console.error('[claim-welcome-gift] Wallet sync failed:', err)
+    )
 
     return NextResponse.json({ success: true, userCredit }, { status: 200 })
   } catch (error) {
