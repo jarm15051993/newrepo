@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken, extractBearerToken } from '@/lib/jwt'
-import { sendEmail } from '@/lib/email'
+import { sendEmail, type EmailLanguage } from '@/lib/email'
 import { getAppUrl } from '@/lib/app-url'
 
 function toIcalDate(date: Date): string {
@@ -141,11 +141,13 @@ export async function POST(request: NextRequest) {
 
     // Send booking confirmation email with .ics calendar invite
     try {
-      const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true, name: true } })
+      const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true, name: true, language: true } })
       if (user) {
         const bookedClass = result.class
-        const date = new Date(bookedClass.startTime).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
-        const time = `${new Date(bookedClass.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} - ${new Date(bookedClass.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`
+        const lang = (user.language ?? 'es') as EmailLanguage
+        const locale = lang === 'en' ? 'en-GB' : lang === 'ca' ? 'ca-ES' : 'es-ES'
+        const date = new Date(bookedClass.startTime).toLocaleDateString(locale, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+        const time = `${new Date(bookedClass.startTime).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })} - ${new Date(bookedClass.endTime).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}`
         const icsContent = buildIcs({
           uid: `booking-${result.id}@oomawellness.com`,
           title: bookedClass.title,
@@ -157,6 +159,7 @@ export async function POST(request: NextRequest) {
         await sendEmail({
           to: user.email,
           type: 'booking_confirmation',
+          language: lang,
           userId,
           vars: {
             name: user.name ?? user.email,
@@ -208,7 +211,7 @@ export async function DELETE(request: NextRequest) {
       },
       include: {
         class: { select: { title: true, startTime: true, endTime: true } },
-        user: { select: { email: true, name: true } },
+        user: { select: { email: true, name: true, language: true } },
       }
     })
 
@@ -265,11 +268,14 @@ export async function DELETE(request: NextRequest) {
     try {
       const cancelledClass = booking.class
       const cancelledUser = booking.user
-      const date = new Date(cancelledClass.startTime).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
-      const time = `${new Date(cancelledClass.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} - ${new Date(cancelledClass.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`
+      const lang = (cancelledUser.language ?? 'es') as EmailLanguage
+      const locale = lang === 'en' ? 'en-GB' : lang === 'ca' ? 'ca-ES' : 'es-ES'
+      const date = new Date(cancelledClass.startTime).toLocaleDateString(locale, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+      const time = `${new Date(cancelledClass.startTime).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })} - ${new Date(cancelledClass.endTime).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}`
       await sendEmail({
         to: cancelledUser.email,
         type: 'booking_cancellation',
+        language: lang,
         userId,
         vars: {
           name: cancelledUser.name ?? cancelledUser.email,

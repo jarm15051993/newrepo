@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import crypto from 'crypto'
 import { verifyToken, extractBearerToken } from '@/lib/jwt'
-import { sendEmail } from '@/lib/email'
+import { sendEmail, type EmailLanguage } from '@/lib/email'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
-      select: { name: true },
+      select: { name: true, language: true },
     })
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
@@ -49,6 +49,7 @@ export async function POST(request: NextRequest) {
     await sendEmail({
       to: trimmed,
       type: 'email_verification',
+      language: (user.language ?? 'es') as EmailLanguage,
       userId: payload.userId,
       vars: { name: user.name ?? 'there', newEmail: trimmed, link },
     })

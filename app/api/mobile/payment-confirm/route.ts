@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { verifyToken, extractBearerToken } from '@/lib/jwt'
 import { prisma } from '@/lib/prisma'
-import { sendEmail } from '@/lib/email'
+import { sendEmail, type EmailLanguage } from '@/lib/email'
 import { triggerWalletPassUpdate } from '@/lib/wallet'
 
 export async function POST(request: NextRequest) {
@@ -63,13 +63,16 @@ export async function POST(request: NextRequest) {
     // Fire-and-forget purchase confirmation email
     const packageName = intent.metadata.packageName ?? `${classes} Class Pack`
     const amount = ((intent.amount_received || 0) / 100).toFixed(2)
-    const expiresLabel = expiresAt ? expiresAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'No expiry'
-    prisma.user.findUnique({ where: { id: userId }, select: { email: true, name: true } })
+    prisma.user.findUnique({ where: { id: userId }, select: { email: true, name: true, language: true } })
       .then(user => {
         if (!user) return
+        const lang = (user.language ?? 'es') as EmailLanguage
+        const locale = lang === 'en' ? 'en-GB' : lang === 'ca' ? 'ca-ES' : 'es-ES'
+        const expiresLabel = expiresAt ? expiresAt.toLocaleDateString(locale, { month: 'long', day: 'numeric', year: 'numeric' }) : 'No expiry'
         return sendEmail({
           to: user.email,
           type: 'package_purchase',
+          language: lang,
           userId,
           vars: { name: user.name ?? 'there', packageName, classCount: classes, amount, expiresAt: expiresLabel },
         })

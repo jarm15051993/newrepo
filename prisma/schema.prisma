@@ -41,6 +41,7 @@ model User {
   canMarkAsStudent      Boolean  @default(false)
   isStudent             Boolean  @default(false)
   isBeta                Boolean  @default(false)
+  language              String   @default("es")
   disclaimerAcceptedAt  DateTime?
   disclaimerVersion     String?
   dni                   String?  @unique
@@ -187,11 +188,14 @@ model PasswordResetToken {
 
 model EmailTemplate {
   id        String   @id @default(cuid())
-  type      String   @unique
+  type      String
+  language  String   @default("es")
   subject   String
   htmlBody  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([type, language])
 }
 
 model AdminAuditLog {

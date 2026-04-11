@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
       await sendEmail({
         to: user.email,
         type: 'activation',
+        language: 'en',
         userId: user.id,
         vars: { name: user.name ?? user.email, link: activationLink },
       })

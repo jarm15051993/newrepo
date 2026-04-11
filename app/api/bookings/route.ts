@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken, extractBearerToken } from '@/lib/jwt'
-import { sendEmail } from '@/lib/email'
+import { sendEmail, type EmailLanguage } from '@/lib/email'
 import { triggerWalletPassUpdate } from '@/lib/wallet'
 
 export async function POST(request: NextRequest) {
@@ -123,14 +123,17 @@ export async function POST(request: NextRequest) {
     )
 
     // Confirmation email → always goes to the target user
-    prisma.user.findUnique({ where: { id: userId }, select: { email: true, name: true } })
+    prisma.user.findUnique({ where: { id: userId }, select: { email: true, name: true, language: true } })
       .then(user => {
         if (!user) return
-        const date = booking.class.startTime.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
-        const time = booking.class.startTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        const lang = (user.language ?? 'es') as EmailLanguage
+        const locale = lang === 'en' ? 'en-GB' : lang === 'ca' ? 'ca-ES' : 'es-ES'
+        const date = booking.class.startTime.toLocaleDateString(locale, { weekday: 'long', month: 'long', day: 'numeric' })
+        const time = booking.class.startTime.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
         return sendEmail({
           to: user.email,
           type: 'booking_confirmation',
+          language: lang,
           userId,
           vars: {
             name: user.name ?? 'there',

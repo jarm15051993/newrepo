@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { sendEmail } from '@/lib/email'
+import { sendEmail, type EmailLanguage } from '@/lib/email'
 import { getAppUrl } from '@/lib/app-url'
 
 export async function POST(request: NextRequest) {
@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
     await sendEmail({
       to: user.email,
       type: 'password_reset',
+      language: (user.language ?? 'es') as EmailLanguage,
       userId: user.id,
       vars: { name: user.name ?? user.email, link },
       metadata: { resetToken: token },

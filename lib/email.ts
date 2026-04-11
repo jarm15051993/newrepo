@@ -22,16 +22,19 @@ function applyPlaceholders(template: string, vars: Record<string, string>): stri
   )
 }
 
+export type EmailLanguage = 'en' | 'es' | 'ca'
+
 interface SendEmailOptions {
   to: string
   type: 'activation' | 'password_reset' | 'email_verification' | 'booking_confirmation' | 'booking_cancellation' | 'package_purchase' | 'student_status_granted' | 'student_status_removed'
+  language?: EmailLanguage
   userId?: string
   vars: Record<string, string>
   metadata?: Record<string, unknown>
   attachments?: Array<{ filename: string; content: Buffer; contentType?: string }>
 }
 
-export async function sendEmail({ to, type, userId, vars, metadata, attachments }: SendEmailOptions): Promise<void> {
+export async function sendEmail({ to, type, language = 'en', userId, vars, metadata, attachments }: SendEmailOptions): Promise<void> {
   // Check notification preference for controllable email types
   if (userId && PREFERENCE_CONTROLLED_TYPES.has(type)) {
     const pref = await prisma.notificationPreference.findUnique({
@@ -42,10 +45,13 @@ export async function sendEmail({ to, type, userId, vars, metadata, attachments 
     // If no row exists, default is On — continue sending
   }
 
-  // Fetch template from DB
-  const template = await prisma.emailTemplate.findUnique({ where: { type } })
+  // Fetch template from DB — fall back to 'es' if the requested language variant doesn't exist
+  let template = await prisma.emailTemplate.findUnique({ where: { type_language: { type, language } } })
+  if (!template && language !== 'es') {
+    template = await prisma.emailTemplate.findUnique({ where: { type_language: { type, language: 'es' } } })
+  }
   if (!template) {
-    throw new Error(`No email template found for type: ${type}`)
+    throw new Error(`No email template found for type: ${type}, language: ${language}`)
   }
 
   const subject = applyPlaceholders(template.subject, vars)

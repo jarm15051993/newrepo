@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken, extractBearerToken } from '@/lib/jwt'
 import { prisma } from '@/lib/prisma'
-import { sendEmail } from '@/lib/email'
+import { sendEmail, type EmailLanguage } from '@/lib/email'
 
 export async function GET(
   request: NextRequest,
@@ -65,7 +65,7 @@ export async function PATCH(
 
     const targetUser = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, name: true, email: true, role: true },
+      select: { id: true, name: true, email: true, role: true, language: true },
     })
     if (!targetUser) return NextResponse.json({ error: 'User not found' }, { status: 404 })
     if (targetUser.role !== 'USER') {
@@ -82,6 +82,7 @@ export async function PATCH(
     sendEmail({
       to: targetUser.email,
       type: emailType,
+      language: (targetUser.language ?? 'es') as EmailLanguage,
       userId: targetUser.id,
       vars: { name: targetUser.name ?? 'there' },
     }).catch(err => console.error('[mark-as-student] Email error:', err))

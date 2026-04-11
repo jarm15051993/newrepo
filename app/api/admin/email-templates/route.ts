@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 const TEMPLATES = [
   {
     type: 'activation',
+    language: 'es',
     subject: 'Activate your OOMA Wellness Club account',
     htmlBody: `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #000; color: #fff; padding: 40px; border-radius: 12px;">
   <h1 style="color: #fbbf24; text-align: center; margin-bottom: 8px;">OOMA Wellness Club</h1>
@@ -19,6 +20,7 @@ const TEMPLATES = [
   },
   {
     type: 'password_reset',
+    language: 'es',
     subject: 'Reset your OOMA Wellness Club password',
     htmlBody: `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #000; color: #fff; padding: 40px; border-radius: 12px;">
   <h1 style="color: #fbbf24; text-align: center; margin-bottom: 8px;">OOMA Wellness Club</h1>
@@ -34,6 +36,7 @@ const TEMPLATES = [
   },
   {
     type: 'booking_confirmation',
+    language: 'es',
     subject: 'Booking confirmed: {{classTitle}}',
     htmlBody: `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #000; color: #fff; padding: 40px; border-radius: 12px;">
   <h1 style="color: #fbbf24; text-align: center; margin-bottom: 8px;">OOMA Wellness Club</h1>
@@ -53,6 +56,7 @@ const TEMPLATES = [
   },
   {
     type: 'booking_cancellation',
+    language: 'es',
     subject: 'Booking cancelled: {{classTitle}}',
     htmlBody: `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #000; color: #fff; padding: 40px; border-radius: 12px;">
   <h1 style="color: #fbbf24; text-align: center; margin-bottom: 8px;">OOMA Wellness Club</h1>
@@ -71,6 +75,7 @@ const TEMPLATES = [
   },
   {
     type: 'package_purchase',
+    language: 'es',
     subject: 'Your OOMA class pack is ready — {{packageName}}',
     htmlBody: `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #000; color: #fff; padding: 40px; border-radius: 12px;">
   <h1 style="color: #fbbf24; text-align: center; margin-bottom: 8px;">OOMA Wellness Club</h1>
@@ -106,7 +111,7 @@ export async function POST() {
     const results = []
     for (const t of TEMPLATES) {
       await prisma.emailTemplate.upsert({
-        where: { type: t.type },
+        where: { type_language: { type: t.type, language: t.language } },
         update: { subject: t.subject, htmlBody: t.htmlBody },
         create: t,
       })

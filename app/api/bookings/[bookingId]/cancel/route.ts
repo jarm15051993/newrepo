@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken, extractBearerToken } from '@/lib/jwt'
-import { sendEmail } from '@/lib/email'
+import { sendEmail, type EmailLanguage } from '@/lib/email'
 import { triggerWalletPassUpdate } from '@/lib/wallet'
 
 export async function PATCH(
@@ -78,17 +78,20 @@ export async function PATCH(
     )
 
     // Cancellation email → always to the target user
-    prisma.user.findUnique({ where: { id: effectiveUserId }, select: { email: true, name: true } })
+    prisma.user.findUnique({ where: { id: effectiveUserId }, select: { email: true, name: true, language: true } })
       .then(user => {
         if (!user) return
-        const date = updatedBooking.class.startTime.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
-        const time = updatedBooking.class.startTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        const lang = (user.language ?? 'es') as EmailLanguage
+        const locale = lang === 'en' ? 'en-GB' : lang === 'ca' ? 'ca-ES' : 'es-ES'
+        const date = updatedBooking.class.startTime.toLocaleDateString(locale, { weekday: 'long', month: 'long', day: 'numeric' })
+        const time = updatedBooking.class.startTime.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
         const creditNote = creditLost
           ? 'This class was cancelled less than 1 hour before it started, so your credit was not returned.'
           : 'Your credit has been returned to your account.'
         return sendEmail({
           to: user.email,
           type: 'booking_cancellation',
+          language: lang,
           userId: effectiveUserId,
           vars: { name: user.name ?? 'there', classTitle: updatedBooking.class.title, date, time, creditNote },
         })

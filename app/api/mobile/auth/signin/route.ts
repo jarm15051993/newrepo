@@ -47,8 +47,10 @@ export async function POST(request: NextRequest) {
     })
 
     const { password: _, isAdmin: __, ...userWithoutPassword } = user
+    // Admins and owners always see English; students use their stored language preference
+    const language = (user.role === 'ADMIN' || user.role === 'OWNER') ? 'en' : (user.language ?? 'es')
 
-    return NextResponse.json({ token, user: userWithoutPassword }, { status: 200 })
+    return NextResponse.json({ token, user: { ...userWithoutPassword, language } }, { status: 200 })
   } catch (error) {
     console.error('Mobile signin error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

@@ -6,7 +6,7 @@ import { validateDNI } from '@/utils/validateDNI'
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json()
-    const { userId, password, name, lastName, phone, goals, goalIds, birthday, additionalInfo, dni } = body
+    const { userId, password, name, lastName, phone, goals, goalIds, birthday, additionalInfo, dni, language } = body
 
     const usingGoalIds = Array.isArray(goalIds) && goalIds.length > 0
     if (!userId || !password || !name || !lastName || !phone || !birthday || (!usingGoalIds && !goals)) {
@@ -80,6 +80,7 @@ export async function PATCH(request: NextRequest) {
           birthday: new Date(birthday),
           additionalInfo: additionalInfo || null,
           onboardingCompleted: true,
+          language: ['en', 'es', 'ca'].includes(language) ? language : 'es',
           activatedAt: user.activatedAt ?? new Date(),
           qrCode: user.qrCode ?? crypto.randomUUID(),
         },

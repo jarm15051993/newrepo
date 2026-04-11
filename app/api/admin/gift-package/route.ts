@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken, extractBearerToken } from '@/lib/jwt'
 import { prisma } from '@/lib/prisma'
-import { sendEmail } from '@/lib/email'
+import { sendEmail, type EmailLanguage } from '@/lib/email'
 import { triggerWalletPassUpdate } from '@/lib/wallet'
 
 /**
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     const [targetUser, pkg] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
-        select: { id: true, name: true, email: true, role: true },
+        select: { id: true, name: true, email: true, role: true, language: true },
       }),
       prisma.package.findUnique({
         where: { id: packageId },
@@ -84,13 +84,16 @@ export async function POST(request: NextRequest) {
     )
 
     // Fire-and-forget confirmation email to the recipient
+    const lang = (targetUser.language ?? 'es') as EmailLanguage
+    const locale = lang === 'en' ? 'en-GB' : lang === 'ca' ? 'ca-ES' : 'es-ES'
     const expiresLabel = expiresAt
-      ? expiresAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+      ? expiresAt.toLocaleDateString(locale, { month: 'long', day: 'numeric', year: 'numeric' })
       : 'No expiry'
 
     sendEmail({
       to: targetUser.email,
       type: 'package_purchase',
+      language: lang,
       userId,
       vars: {
         name: targetUser.name ?? 'there',
