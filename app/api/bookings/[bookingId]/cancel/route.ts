@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken, extractBearerToken } from '@/lib/jwt'
 import { sendEmail } from '@/lib/email'
+import { triggerWalletPassUpdate } from '@/lib/wallet'
 
 export async function PATCH(
   request: NextRequest,
@@ -71,6 +72,10 @@ export async function PATCH(
 
       return updated
     })
+
+    triggerWalletPassUpdate(effectiveUserId).catch(err =>
+      console.error('[bookings/cancel] Wallet sync failed:', err)
+    )
 
     // Cancellation email → always to the target user
     prisma.user.findUnique({ where: { id: effectiveUserId }, select: { email: true, name: true } })

@@ -22,7 +22,7 @@ async function main() {
 
   const classes = []
 
-  for (let day = 1; day <= 5; day++) {
+  for (let day = 1; day <= 14; day++) {
     const date = new Date(today)
     date.setDate(today.getDate() + day)
 
@@ -44,7 +44,7 @@ async function main() {
   }
 
   const result = await prisma.class.createMany({ data: classes })
-  console.log(`Created ${result.count} classes across 5 days`)
+  console.log(`Created ${result.count} classes across 14 days`)
 }
 
 main()

@@ -77,6 +77,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'End time must be after start time' }, { status: 400 })
     }
 
+    const durationMins = (end.getTime() - start.getTime()) / 60000
+    if (durationMins < 30 || durationMins > 180 || durationMins % 10 !== 0) {
+      return NextResponse.json(
+        { error: 'Duration must be between 30 and 180 minutes in 10-minute increments.' },
+        { status: 400 }
+      )
+    }
+
     const newClass = await prisma.class.create({
       data: {
         title,
