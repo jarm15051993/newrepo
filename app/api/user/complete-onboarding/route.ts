@@ -1,15 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import { validateDNI } from '@/utils/validateDNI'
 
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json()
-    const { userId, password, name, lastName, phone, goals, goalIds, birthday, additionalInfo } = body
+    const { userId, password, name, lastName, phone, goals, goalIds, birthday, additionalInfo, dni } = body
 
     const usingGoalIds = Array.isArray(goalIds) && goalIds.length > 0
     if (!userId || !password || !name || !lastName || !phone || !birthday || (!usingGoalIds && !goals)) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 })
+    }
+
+    if (!dni || typeof dni !== 'string' || !dni.trim()) {
+      return NextResponse.json({ message: 'DNI/NIE is required.' }, { status: 400 })
+    }
+
+    const normalizedDni = dni.trim().toUpperCase()
+
+    if (!validateDNI(normalizedDni)) {
+      return NextResponse.json({ message: 'Invalid DNI/NIE format.' }, { status: 400 })
+    }
+
+    const existingDni = await prisma.user.findFirst({
+      where: { dni: normalizedDni, NOT: { id: userId } },
+      select: { id: true },
+    })
+    if (existingDni) {
+      return NextResponse.json({ message: 'This DNI/NIE is already registered.' }, { status: 409 })
     }
 
     if (usingGoalIds) {
@@ -56,6 +75,7 @@ export async function PATCH(request: NextRequest) {
           name,
           lastName,
           phone,
+          dni: normalizedDni,
           ...(!usingGoalIds && { goals }),
           birthday: new Date(birthday),
           additionalInfo: additionalInfo || null,

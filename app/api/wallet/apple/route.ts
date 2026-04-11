@@ -54,14 +54,6 @@ export async function GET(request: NextRequest) {
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
     if (!user.qrCode) return NextResponse.json({ error: 'QR code not yet generated' }, { status: 400 })
 
-    const credits = await prisma.userCredit.findMany({
-      where: {
-        userId: user.id,
-        creditsRemaining: { gt: 0 },
-        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
-      },
-    })
-    const totalCredits = credits.reduce((sum, c) => sum + c.creditsRemaining, 0)
     const fullName = [user.name, user.lastName].filter(Boolean).join(' ') || 'Ooma Member'
 
     const passJson = {
@@ -78,7 +70,6 @@ export async function GET(request: NextRequest) {
       generic: {
         headerFields: [{ key: 'name', label: 'MEMBER', value: fullName }],
         primaryFields: [{ key: 'type', label: 'MEMBERSHIP', value: 'Class Pass' }],
-        secondaryFields: [{ key: 'credits', label: 'CLASSES LEFT', value: String(totalCredits) }],
       },
       barcodes: [{ format: 'PKBarcodeFormatQR', message: user.qrCode, messageEncoding: 'iso-8859-1' }],
     }
