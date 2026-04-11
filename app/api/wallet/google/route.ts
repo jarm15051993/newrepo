@@ -22,14 +22,6 @@ export async function GET(request: NextRequest) {
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
     if (!user.qrCode) return NextResponse.json({ error: 'QR code not yet generated' }, { status: 400 })
 
-    const credits = await prisma.userCredit.findMany({
-      where: {
-        userId: user.id,
-        creditsRemaining: { gt: 0 },
-        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
-      },
-    })
-    const totalCredits = credits.reduce((sum, c) => sum + c.creditsRemaining, 0)
     const fullName = [user.name, user.lastName].filter(Boolean).join(' ') || 'Ooma Member'
 
     const credentials = JSON.parse(process.env.GOOGLE_WALLET_CREDENTIALS)
@@ -44,10 +36,6 @@ export async function GET(request: NextRequest) {
       state: 'ACTIVE',
       accountName: fullName,
       accountId: user.id,
-      loyaltyPoints: {
-        balance: { string: String(totalCredits) },
-        label: 'Classes Left',
-      },
       textModulesData: [
         {
           header: 'MEMBERSHIP',
