@@ -53,13 +53,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const { title, description, startTime, endTime, capacity, instructor } = await request.json()
+    const { title, description, startTime, endTime, capacity, instructor, classType } = await request.json()
 
     if (!title || !startTime || !endTime || !capacity) {
       return NextResponse.json(
         { error: 'Title, start time, end time, and capacity are required' },
         { status: 400 }
       )
+    }
+
+    if (classType && !['REFORMER', 'YOGA'].includes(classType)) {
+      return NextResponse.json({ error: 'Invalid classType. Must be REFORMER or YOGA' }, { status: 400 })
     }
 
     if (capacity < 1 || capacity > 6) {
@@ -92,7 +96,8 @@ export async function POST(request: NextRequest) {
         startTime: start,
         endTime: end,
         capacity: parseInt(capacity),
-        instructor: instructor || null
+        instructor: instructor || null,
+        classType: classType ?? 'REFORMER',
       }
     })
 

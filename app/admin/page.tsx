@@ -59,7 +59,8 @@ const defaultForm = {
   endHour: '10',
   endMinute: '00',
   capacity: '6',
-  instructor: ''
+  instructor: '',
+  classType: 'REFORMER',
 }
 
 const toastOpts = (border: string) => ({
@@ -362,7 +363,8 @@ export default function AdminPage() {
           description: form.description || null,
           startTime, endTime,
           capacity: form.capacity,
-          instructor: form.instructor || null
+          instructor: form.instructor || null,
+          classType: form.classType,
         })
       })
       const data = await res.json()
@@ -596,6 +598,24 @@ export default function AdminPage() {
                     <label className="block text-sm font-medium text-mgray mb-1 tracking-wide">Class Title <span className="text-burg">*</span></label>
                     <input type="text" name="title" value={form.title} onChange={handleChange} required placeholder="e.g. Morning Flow"
                       className={inputClass} />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-mgray mb-2 tracking-wide">Class Type <span className="text-burg">*</span></label>
+                    <div className="flex gap-3">
+                      {(['REFORMER', 'YOGA'] as const).map(type => (
+                        <label key={type} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="classType"
+                            value={type}
+                            checked={form.classType === type}
+                            onChange={handleChange}
+                            className="accent-burg"
+                          />
+                          <span className="text-sm text-ink">{type === 'REFORMER' ? 'Reformer Pilates' : 'Yoga'}</span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-mgray mb-1 tracking-wide">Description</label>

@@ -32,6 +32,12 @@ export async function POST(request: NextRequest) {
       userId: string; packageId: string; classes: string; durationDays?: string
     }
 
+    // Fetch package to propagate packageType and isUnlimited to UserCredit
+    const pkg = await prisma.package.findUnique({
+      where: { id: packageId },
+      select: { packageType: true, isUnlimited: true },
+    })
+
     await prisma.payment.create({
       data: {
         userId,
@@ -53,6 +59,8 @@ export async function POST(request: NextRequest) {
         creditsRemaining: parseInt(classes),
         creditsTotal: parseInt(classes),
         expiresAt,
+        packageType: pkg?.packageType ?? 'BOTH',
+        isUnlimited: pkg?.isUnlimited ?? false,
       },
     })
 

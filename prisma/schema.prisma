@@ -14,6 +14,17 @@ enum UserRole {
   OWNER
 }
 
+enum ClassType {
+  REFORMER
+  YOGA
+}
+
+enum PackageType {
+  REFORMER
+  YOGA
+  BOTH
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -87,6 +98,8 @@ model Package {
   price         Float
   active        Boolean  @default(true)
   durationDays  Int      @default(30)
+  packageType          PackageType @default(BOTH)
+  isUnlimited          Boolean  @default(false)
   stripePriceId        String?  @unique
   isStudentPackage     Boolean  @default(false)
   studentStripePriceId String?  @unique
@@ -106,6 +119,8 @@ model UserCredit {
   creditsTotal     Int
   expiresAt        DateTime?
   packageId        String?
+  packageType      PackageType @default(BOTH)
+  isUnlimited      Boolean     @default(false)
   stripePaymentId  String?
   createdAt        DateTime  @default(now())
 
@@ -115,15 +130,16 @@ model UserCredit {
 }
 
 model Class {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   title       String
   description String?
   startTime   DateTime
   endTime     DateTime
   capacity    Int
-  bookedCount Int      @default(0)
+  bookedCount Int       @default(0)
   instructor  String?
-  createdAt   DateTime @default(now())
+  classType   ClassType @default(REFORMER)
+  createdAt   DateTime  @default(now())
 
   bookings Booking[]
 }

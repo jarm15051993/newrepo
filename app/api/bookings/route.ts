@@ -48,23 +48,38 @@ export async function POST(request: NextRequest) {
     }
 
     const now = new Date()
+
+    // Check unlimited credits first (compatible with this class type)
+    const unlimitedCredits = await prisma.userCredit.findMany({
+      where: {
+        userId,
+        isUnlimited: true,
+        OR: [{ expiresAt: null }, { expiresAt: { gte: now } }],
+        packageType: { in: [cls.classType, 'BOTH'] },
+      },
+    })
+
+    const hasUnlimited = unlimitedCredits.length > 0
+
+    // Regular credits compatible with class type
     const activeCredits = await prisma.userCredit.findMany({
       where: {
         userId,
         creditsRemaining: { gt: 0 },
         OR: [{ expiresAt: null }, { expiresAt: { gte: now } }],
+        packageType: { in: [cls.classType, 'BOTH'] },
       },
       orderBy: { createdAt: 'asc' },
     })
 
-    if (activeCredits.length === 0) {
+    if (!hasUnlimited && activeCredits.length === 0) {
       return NextResponse.json(
-        { error: 'No active classes remaining. Please purchase a package.' },
+        { error: 'No active classes remaining for this class type. Please purchase a compatible package.' },
         { status: 400 }
       )
     }
 
-    const creditToUse = activeCredits[0]
+    const creditToUse = hasUnlimited ? unlimitedCredits[0] : activeCredits[0]
 
     const bookedNumbers = cls.bookings.map(b => b.stretcherNumber)
     const availableReformer = [1, 2, 3, 4, 5, 6].find(n => !bookedNumbers.includes(n))
@@ -94,10 +109,12 @@ export async function POST(request: NextRequest) {
         include: { class: true },
       })
 
-      await tx.userCredit.update({
-        where: { id: creditToUse.id },
-        data: { creditsRemaining: creditToUse.creditsRemaining - 1 },
-      })
+      if (!hasUnlimited) {
+        await tx.userCredit.update({
+          where: { id: creditToUse.id },
+          data: { creditsRemaining: creditToUse.creditsRemaining - 1 },
+        })
+      }
 
       await tx.class.update({
         where: { id: classId },

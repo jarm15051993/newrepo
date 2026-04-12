@@ -26,6 +26,8 @@ export async function GET(request: NextRequest) {
         price: true,
         durationDays: true,
         isStudentPackage: true,
+        packageType: true,
+        isUnlimited: true,
       },
     })
 

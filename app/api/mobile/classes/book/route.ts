@@ -50,7 +50,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Class ID required' }, { status: 400 })
     }
 
-    // Check if user has credits
+    // Fetch class to determine classType before credit validation
+    const clsForType = await prisma.class.findUnique({
+      where: { id: classId },
+      select: { classType: true }
+    })
+
+    if (!clsForType) {
+      return NextResponse.json({ error: 'Class not found' }, { status: 404 })
+    }
+
+    // Check if user has credits compatible with this class type
     const credits = await prisma.userCredit.findMany({
       where: {
         userId,
@@ -58,15 +68,35 @@ export async function POST(request: NextRequest) {
         OR: [
           { expiresAt: null },
           { expiresAt: { gte: new Date() } }
-        ]
+        ],
+        packageType: { in: [clsForType.classType, 'BOTH'] }
       },
       orderBy: {
         expiresAt: 'asc' // Use oldest credits first
       }
     })
 
-    if (credits.length === 0 || credits.reduce((sum, c) => sum + c.creditsRemaining, 0) === 0) {
-      return NextResponse.json({ error: 'No credits available' }, { status: 400 })
+    // Also check unlimited credits (creditsRemaining is irrelevant for unlimited)
+    const unlimitedCredits = await prisma.userCredit.findMany({
+      where: {
+        userId,
+        isUnlimited: true,
+        OR: [
+          { expiresAt: null },
+          { expiresAt: { gte: new Date() } }
+        ],
+        packageType: { in: [clsForType.classType, 'BOTH'] }
+      }
+    })
+
+    const hasUnlimited = unlimitedCredits.length > 0
+    const creditToUse = hasUnlimited ? unlimitedCredits[0] : credits[0]
+
+    if (!hasUnlimited && credits.length === 0) {
+      return NextResponse.json(
+        { error: 'No credits available for this class type. Please purchase a compatible package.' },
+        { status: 400 }
+      )
     }
 
     // Check if already booked
@@ -80,7 +110,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'You have already booked this class' }, { status: 400 })
     }
 
-    // Fetch class to check capacity via bookedCount
+    // Fetch class to check capacity
     const cls = await prisma.class.findUnique({
       where: { id: classId },
       select: {
@@ -106,7 +136,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No reformers available' }, { status: 400 })
     }
 
-    // Create booking, deduct credit, and increment bookedCount in a transaction
+    // Create booking, optionally deduct credit, and increment bookedCount in a transaction
     const result = await prisma.$transaction(async (tx) => {
       const booking = await tx.booking.create({
         data: {
@@ -114,21 +144,20 @@ export async function POST(request: NextRequest) {
           classId,
           stretcherNumber: availableReformer,
           status: 'confirmed',
-          userCreditId: credits[0].id,
+          userCreditId: creditToUse.id,
         },
         include: {
           class: true
         }
       })
 
-      // Deduct one credit from the oldest credit record
-      const creditToUse = credits[0]
-      await tx.userCredit.update({
-        where: { id: creditToUse.id },
-        data: {
-          creditsRemaining: creditToUse.creditsRemaining - 1
-        }
-      })
+      // Only deduct if not an unlimited credit
+      if (!hasUnlimited) {
+        await tx.userCredit.update({
+          where: { id: creditToUse.id },
+          data: { creditsRemaining: creditToUse.creditsRemaining - 1 }
+        })
+      }
 
       // Increment bookedCount on the class
       await tx.class.update({
@@ -219,7 +248,15 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 })
     }
 
-    // Cancel booking, reinstate credit, and decrement bookedCount in a transaction
+    // Determine if the credit used was unlimited (skip reinstatement if so)
+    const usedCredit = booking.userCreditId
+      ? await prisma.userCredit.findUnique({
+          where: { id: booking.userCreditId },
+          select: { isUnlimited: true }
+        })
+      : null
+
+    // Cancel booking, reinstate credit if applicable, and decrement bookedCount in a transaction
     await prisma.$transaction(async (tx) => {
       // Delete the booking
       await tx.booking.delete({
@@ -232,34 +269,11 @@ export async function DELETE(request: NextRequest) {
         data: { bookedCount: { decrement: 1 } }
       })
 
-      // Find the oldest non-expired credit record to return the credit to
-      const creditRecord = await tx.userCredit.findFirst({
-        where: {
-          userId,
-          OR: [
-            { expiresAt: null },
-            { expiresAt: { gte: new Date() } }
-          ]
-        },
-        orderBy: { expiresAt: 'asc' }
-      })
-
-      if (creditRecord) {
+      // Reinstate credit only if not unlimited and the credit record still exists
+      if (!usedCredit?.isUnlimited && booking.userCreditId) {
         await tx.userCredit.update({
-          where: { id: creditRecord.id },
-          data: { creditsRemaining: creditRecord.creditsRemaining + 1 }
-        })
-      } else {
-        // All credit records are expired — create a new one with 6-month expiry
-        const expiresAt = new Date()
-        expiresAt.setMonth(expiresAt.getMonth() + 6)
-        await tx.userCredit.create({
-          data: {
-            userId,
-            creditsRemaining: 1,
-            creditsTotal: 1,
-            expiresAt
-          }
+          where: { id: booking.userCreditId },
+          data: { creditsRemaining: { increment: 1 } }
         })
       }
     })

@@ -25,7 +25,10 @@ export async function PATCH(
 
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
-      include: { class: true },
+      include: {
+        class: true,
+        userCredit: { select: { isUnlimited: true } },
+      },
     })
 
     if (!booking || booking.userId !== effectiveUserId) {
@@ -52,7 +55,7 @@ export async function PATCH(
         data: { bookedCount: { decrement: 1 } },
       })
 
-      if (!creditLost && booking.userCreditId) {
+      if (!creditLost && booking.userCreditId && !booking.userCredit?.isUnlimited) {
         await tx.userCredit.update({
           where: { id: booking.userCreditId },
           data: { creditsRemaining: { increment: 1 } },

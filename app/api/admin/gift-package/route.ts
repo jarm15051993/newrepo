@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       }),
       prisma.package.findUnique({
         where: { id: packageId },
-        select: { id: true, name: true, classCount: true, durationDays: true },
+        select: { id: true, name: true, classCount: true, durationDays: true, packageType: true, isUnlimited: true },
       }),
     ])
 
@@ -64,6 +64,8 @@ export async function POST(request: NextRequest) {
           creditsRemaining: pkg.classCount,
           expiresAt,
           stripePaymentId: null,
+          packageType: pkg.packageType,
+          isUnlimited: pkg.isUnlimited,
         },
       })
 

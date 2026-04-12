@@ -5,6 +5,7 @@ const prisma = new PrismaClient()
 const templates = [
   {
     type: 'activation',
+    language: 'es',
     subject: 'Activate your OOMA Wellness Club account',
     htmlBody: `
 <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #000; color: #fff; padding: 40px; border-radius: 12px;">
@@ -33,6 +34,7 @@ const templates = [
   },
   {
     type: 'password_reset',
+    language: 'es',
     subject: 'Reset your OOMA Wellness Club password',
     htmlBody: `
 <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #000; color: #fff; padding: 40px; border-radius: 12px;">
@@ -62,6 +64,7 @@ const templates = [
   },
   {
     type: 'booking_confirmation',
+    language: 'es',
     subject: 'Booking confirmed: {{classTitle}}',
     htmlBody: `
 <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #000; color: #fff; padding: 40px; border-radius: 12px;">
@@ -102,6 +105,7 @@ const templates = [
   },
   {
     type: 'package_purchase',
+    language: 'es',
     subject: 'Your {{packageName}} is confirmed',
     htmlBody: `
 <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #000; color: #fff; padding: 40px; border-radius: 12px;">
@@ -142,6 +146,7 @@ const templates = [
   },
   {
     type: 'booking_cancellation',
+    language: 'es',
     subject: 'Booking cancelled: {{classTitle}}',
     htmlBody: `
 <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #000; color: #fff; padding: 40px; border-radius: 12px;">
@@ -181,6 +186,7 @@ const templates = [
   },
   {
     type: 'student_status_granted',
+    language: 'es',
     subject: 'Your student discount is now active at OOMA',
     htmlBody: `
 <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #000; color: #fff; padding: 40px; border-radius: 12px;">
@@ -204,6 +210,7 @@ const templates = [
   },
   {
     type: 'student_status_removed',
+    language: 'es',
     subject: 'Your student status at OOMA has been updated',
     htmlBody: `
 <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #000; color: #fff; padding: 40px; border-radius: 12px;">
@@ -226,6 +233,7 @@ const templates = [
   },
   {
     type: 'email_verification',
+    language: 'es',
     subject: 'Verify your new email address',
     htmlBody: `
 <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #000; color: #fff; padding: 40px; border-radius: 12px;">
@@ -258,7 +266,7 @@ const templates = [
 async function main() {
   for (const template of templates) {
     await prisma.emailTemplate.upsert({
-      where: { type: template.type },
+      where: { type_language: { type: template.type, language: template.language } },
       update: { subject: template.subject, htmlBody: template.htmlBody },
       create: template,
     })

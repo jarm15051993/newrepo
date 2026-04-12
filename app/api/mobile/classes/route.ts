@@ -47,6 +47,7 @@ export async function GET(request: NextRequest) {
         endTime: cls.endTime,
         capacity: cls.capacity,
         instructor: cls.instructor,
+        classType: cls.classType,
         bookedSpots: bookedCount,
         availableSpots: cls.capacity - bookedCount,
         isFull: bookedCount >= cls.capacity,

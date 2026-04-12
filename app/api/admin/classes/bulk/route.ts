@@ -9,6 +9,7 @@ type BulkClassInput = {
   startTime: string  // HH:MM
   durationMins: number
   capacity: number
+  classType?: string // REFORMER | YOGA
 }
 
 export async function POST(request: NextRequest) {
@@ -39,6 +40,10 @@ export async function POST(request: NextRequest) {
       start.setHours(hours, mins, 0, 0)
       const end = new Date(start.getTime() + c.durationMins * 60_000)
 
+      const classType = c.classType && ['REFORMER', 'YOGA'].includes(c.classType.toUpperCase())
+        ? c.classType.toUpperCase() as 'REFORMER' | 'YOGA'
+        : 'REFORMER'
+
       toCreate.push({
         title: c.title,
         instructor: c.instructor || null,
@@ -46,6 +51,7 @@ export async function POST(request: NextRequest) {
         endTime: end,
         capacity: c.capacity,
         bookedCount: 0,
+        classType,
       })
     }
 
