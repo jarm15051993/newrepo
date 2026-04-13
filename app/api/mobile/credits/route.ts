@@ -7,14 +7,16 @@ export async function GET(request: NextRequest) {
     const token = extractBearerToken(request.headers.get('authorization'))
     if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const payload = await verifyToken(token)
-    const userId = payload.userId
 
+    // Support tenant mode: admin viewing a student's credits
+    const tenantUserId = request.headers.get('x-tenant-user-id')
+    const effectiveUserId = tenantUserId ?? payload.userId
+
+    // Return all non-expired credits (including depleted ones) so the frontend
+    // can distinguish "wrong plan type" from "right type but out of credits"
     const credits = await prisma.userCredit.findMany({
       where: {
-        userId,
-        creditsRemaining: {
-          gt: 0
-        },
+        userId: effectiveUserId,
         OR: [
           { expiresAt: null },
           { expiresAt: { gte: new Date() } }
@@ -22,7 +24,7 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    const totalCredits = credits.reduce((sum, credit) => sum + credit.creditsRemaining, 0)
+    const totalCredits = credits.reduce((sum, c) => sum + Math.max(0, c.creditsRemaining), 0)
 
     return NextResponse.json({ totalCredits, credits })
   } catch (error: any) {
