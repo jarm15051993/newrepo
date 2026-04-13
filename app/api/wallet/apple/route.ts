@@ -63,7 +63,6 @@ export async function GET(request: NextRequest) {
       teamIdentifier: process.env.APPLE_TEAM_ID!,
       organizationName: 'Ooma Wellness',
       description: 'Ooma Class Pass',
-      logoText: 'Ooma',
       backgroundColor: PASS_BG_COLOR,
       labelColor: PASS_FG_COLOR,
       foregroundColor: PASS_FG_COLOR,
