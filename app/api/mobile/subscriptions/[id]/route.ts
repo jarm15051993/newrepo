@@ -9,7 +9,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const token = extractBearerToken(request.headers.get('authorization'))
@@ -17,8 +17,9 @@ export async function PATCH(
     const payload = await verifyToken(token)
     const userId  = payload.userId
 
+    const { id } = await params
     const sub = await prisma.subscription.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!sub) {
