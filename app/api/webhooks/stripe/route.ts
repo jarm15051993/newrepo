@@ -60,9 +60,12 @@ export async function POST(request: NextRequest) {
 // Fires for every successful invoice — initial payment and every renewal.
 // Expires old credits and provisions a fresh allowance for the new period.
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
-  const stripeSubId = typeof invoice.subscription === 'string'
-    ? invoice.subscription
-    : invoice.subscription?.id
+  const subDetails = invoice.parent?.subscription_details
+  const stripeSubId = subDetails
+    ? typeof subDetails.subscription === 'string'
+      ? subDetails.subscription
+      : subDetails.subscription?.id
+    : null
 
   if (!stripeSubId) return // one-time invoice, not a subscription
 
@@ -129,9 +132,12 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
 // Fires when a renewal charge fails. Marks the subscription PAST_DUE and
 // notifies the student. Stripe smart retries will attempt again automatically.
 async function handleInvoiceFailed(invoice: Stripe.Invoice) {
-  const stripeSubId = typeof invoice.subscription === 'string'
-    ? invoice.subscription
-    : invoice.subscription?.id
+  const subDetails = invoice.parent?.subscription_details
+  const stripeSubId = subDetails
+    ? typeof subDetails.subscription === 'string'
+      ? subDetails.subscription
+      : subDetails.subscription?.id
+    : null
 
   if (!stripeSubId) return
 
