@@ -63,11 +63,10 @@ export async function POST(request: NextRequest) {
       customer:         customerId,
       items:            [{ price: pkg.stripePriceId }],
       payment_behavior: 'default_incomplete',
-      expand:           ['latest_invoice.payment_intent'],
+      expand:           ['latest_invoice'],
       metadata:         { userId, packageId },
     })
 
-    // Retrieve the invoice object (may already be expanded inline)
     const invoiceRaw = stripeSub.latest_invoice as any
     const invoiceId  = typeof invoiceRaw === 'string' ? invoiceRaw : invoiceRaw?.id
 
@@ -75,26 +74,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to retrieve invoice' }, { status: 500 })
     }
 
-    // Fetch the invoice with both expand paths so we work across SDK versions
-    const invoice = await stripe.invoices.retrieve(invoiceId, {
-      expand: ['payment_intent'],
-    }) as any
+    // In Stripe SDK v20, payment_intent moved to invoice.payments[0].payment.payment_intent.
+    // List the invoice's payments and expand the nested payment_intent to get the client_secret.
+    const invoicePayments = await stripe.invoicePayments.list(
+      { invoice: invoiceId },
+      { expand: ['data.payment.payment_intent'] } as any,
+    )
 
-    // SDK v20 uses confirmation_secret.client_secret; older SDKs use payment_intent.client_secret
-    const clientSecret: string | null =
-      invoice.confirmation_secret?.client_secret ??
-      invoice.payment_intent?.client_secret ??
-      null
+    const firstPayment  = invoicePayments.data[0]
+    const paymentIntent = firstPayment?.payment?.payment_intent as Stripe.PaymentIntent | undefined
+    const clientSecret  = paymentIntent?.client_secret ?? null
 
     if (!clientSecret) {
-      console.error('[mobile/subscribe] Invoice fields:', JSON.stringify({
-        status: invoice.status,
-        confirmation_secret: invoice.confirmation_secret,
-        payment_intent: typeof invoice.payment_intent,
-      }))
+      console.error('[mobile/subscribe] No client_secret found. Payments:', JSON.stringify(invoicePayments.data))
       return NextResponse.json({ error: 'Failed to create payment intent' }, { status: 500 })
     }
 
+    const invoice     = invoiceRaw as Stripe.Invoice
     const periodStart = new Date(invoice.period_start * 1000)
     const periodEnd   = new Date(invoice.period_end   * 1000)
 
