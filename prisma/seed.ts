@@ -326,6 +326,26 @@ async function main() {
   console.log('Seeded package: Early Member Free Class')
 }
 
+async function seedSettings() {
+  // subscriptionPaymentRequired: true — club membership fee is active from launch
+  // membershipRequiredSince: set to now so all existing users are grandfathered
+  const settings = [
+    { key: 'subscriptionPaymentRequired', value: 'true' },
+    { key: 'subscriptionPrice',           value: '10.00' },
+    { key: 'membershipRequiredSince',     value: new Date().toISOString() },
+  ]
+
+  for (const setting of settings) {
+    await prisma.setting.upsert({
+      where:  { key: setting.key },
+      update: {}, // never overwrite once set — especially membershipRequiredSince
+      create: setting,
+    })
+    console.log(`Seeded setting: ${setting.key} = ${setting.value}`)
+  }
+}
+
 main()
+  .then(() => seedSettings())
   .catch(e => { console.error(e); process.exit(1) })
   .finally(() => prisma.$disconnect())

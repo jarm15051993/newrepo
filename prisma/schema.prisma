@@ -25,6 +25,13 @@ enum PackageType {
   BOTH
 }
 
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  PAST_DUE
+  EXPIRED
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -56,10 +63,13 @@ model User {
   disclaimerAcceptedAt  DateTime?
   disclaimerVersion     String?
   dni                   String?  @unique
+  stripeCustomerId      String?  @unique
+  isClubMember          Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   credits             UserCredit[]
+  subscriptions       Subscription[]
   bookings            Booking[]
   transactions        Transaction[]
   payments            Payment[]
@@ -107,9 +117,10 @@ model Package {
   updatedAt     DateTime @updatedAt
   user_id       String?  @db.Uuid
 
-  transactions Transaction[]
-  payments     Payment[]
-  userCredits  UserCredit[]
+  transactions  Transaction[]
+  payments      Payment[]
+  userCredits   UserCredit[]
+  subscriptions Subscription[]
 }
 
 model UserCredit {
@@ -122,11 +133,13 @@ model UserCredit {
   packageType      PackageType @default(BOTH)
   isUnlimited      Boolean     @default(false)
   stripePaymentId  String?
+  subscriptionId   String?
   createdAt        DateTime  @default(now())
 
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  package  Package?  @relation(fields: [packageId], references: [id])
-  bookings Booking[]
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  package      Package?      @relation(fields: [packageId], references: [id])
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+  bookings     Booking[]
 }
 
 model Class {
@@ -249,4 +262,26 @@ model EmailLog {
   sentAt   DateTime @default(now())
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String
+  user                 User               @relation(fields: [userId], references: [id])
+  packageId            String
+  package              Package            @relation(fields: [packageId], references: [id])
+  stripeSubscriptionId String             @unique
+  status               SubscriptionStatus @default(ACTIVE)
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  cancelledAt          DateTime?
+  createdAt            DateTime           @default(now())
+
+  credits UserCredit[]
+}
+
+// Key-value store for owner-configurable settings
+model Setting {
+  key   String @id
+  value String
 }
