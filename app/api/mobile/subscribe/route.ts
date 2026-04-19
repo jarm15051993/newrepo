@@ -59,20 +59,39 @@ export async function POST(request: NextRequest) {
     const customerId = await getOrCreateStripeCustomer(userId)
 
     // Create Stripe subscription — stays incomplete until first payment is confirmed.
-    // Expand latest_invoice so we can read the billing period and confirmation_secret
-    // (the v2 replacement for payment_intent.client_secret on Invoice).
     const stripeSub = await stripe.subscriptions.create({
       customer:         customerId,
       items:            [{ price: pkg.stripePriceId }],
       payment_behavior: 'default_incomplete',
-      expand:           ['latest_invoice'],
+      expand:           ['latest_invoice.payment_intent'],
       metadata:         { userId, packageId },
     })
 
-    const invoice = stripeSub.latest_invoice as Stripe.Invoice
+    // Retrieve the invoice object (may already be expanded inline)
+    const invoiceRaw = stripeSub.latest_invoice as any
+    const invoiceId  = typeof invoiceRaw === 'string' ? invoiceRaw : invoiceRaw?.id
 
-    const clientSecret = invoice.confirmation_secret?.client_secret
+    if (!invoiceId) {
+      return NextResponse.json({ error: 'Failed to retrieve invoice' }, { status: 500 })
+    }
+
+    // Fetch the invoice with both expand paths so we work across SDK versions
+    const invoice = await stripe.invoices.retrieve(invoiceId, {
+      expand: ['payment_intent'],
+    }) as any
+
+    // SDK v20 uses confirmation_secret.client_secret; older SDKs use payment_intent.client_secret
+    const clientSecret: string | null =
+      invoice.confirmation_secret?.client_secret ??
+      invoice.payment_intent?.client_secret ??
+      null
+
     if (!clientSecret) {
+      console.error('[mobile/subscribe] Invoice fields:', JSON.stringify({
+        status: invoice.status,
+        confirmation_secret: invoice.confirmation_secret,
+        payment_intent: typeof invoice.payment_intent,
+      }))
       return NextResponse.json({ error: 'Failed to create payment intent' }, { status: 500 })
     }
 
