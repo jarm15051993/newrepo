@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { prisma } from '@/lib/prisma'
 import { sendEmail } from '@/lib/email'
+import { endOfDay } from 'date-fns'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2026-01-28.clover' as any,
@@ -71,7 +72,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
 
   const sub = await prisma.subscription.findUnique({
     where:   { stripeSubscriptionId: stripeSubId },
-    include: { package: true },
+    include: { package: true, user: true },
   })
 
   if (!sub) {
@@ -81,9 +82,17 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   }
 
   // Use invoice period dates — period_start/end are present on Invoice in all API versions.
-  // This also avoids an extra subscriptions.retrieve() call.
-  const periodStart = new Date(invoice.period_start * 1000)
-  const periodEnd   = new Date(invoice.period_end   * 1000)
+  // For default_incomplete subscriptions the first invoice can have period_end == period_start
+  // (billing hasn't started yet). Guard against that by falling back to +1 month.
+  const periodStart   = new Date(invoice.period_start * 1000)
+  const rawPeriodEnd  = new Date(invoice.period_end   * 1000)
+  // For default_incomplete subscriptions Stripe may return period_end within seconds/minutes
+  // of period_start (billing period not yet established). Treat any period_end within 24h
+  // of period_start as invalid and fall back to +1 month.
+  const periodTooShort = (rawPeriodEnd.getTime() - periodStart.getTime()) < 86_400_000
+  const periodEnd     = periodTooShort
+    ? new Date(new Date(periodStart).setMonth(periodStart.getMonth() + 1))
+    : rawPeriodEnd
 
   // Idempotency — if we already created credits for this period, skip
   const alreadyHandled = await prisma.userCredit.findFirst({
@@ -121,11 +130,26 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
         isUnlimited:      sub.package.isUnlimited,
         creditsRemaining: sub.package.isUnlimited ? 0 : sub.package.classCount,
         creditsTotal:     sub.package.isUnlimited ? 0 : sub.package.classCount,
-        expiresAt:        periodEnd,
+        expiresAt:        endOfDay(periodEnd),
         stripePaymentId:  invoice.id,
       },
     })
   })
+
+  // Send confirmation email — fire-and-forget so a failed email doesn't retry the webhook
+  sendEmail({
+    to:       sub.user.email,
+    type:     'package_purchase',
+    language: (sub.user.language as any) ?? 'es',
+    userId:   sub.user.id,
+    vars: {
+      name:        sub.user.name ?? '',
+      packageName: sub.package.name,
+      classCount:  sub.package.isUnlimited ? '∞' : sub.package.classCount.toString(),
+      amount:      sub.package.price.toFixed(2),
+      renewsAt:    periodEnd.toLocaleDateString('es-ES'),
+    },
+  }).catch(err => console.error('[webhook/stripe] Failed to send subscription confirmation email:', err))
 }
 
 // ─── invoice.payment_failed ────────────────────────────────────────────────
