@@ -51,6 +51,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'NO_BOOKING_TODAY' }, { status: 404 })
     }
 
+    await prisma.booking.update({
+      where: { id: booking.id },
+      data: { status: 'attended', attendedAt: new Date() },
+    })
+
     return NextResponse.json({
       memberName: `${member.name ?? ''} ${member.lastName ?? ''}`.trim(),
       className: booking.class.title,
