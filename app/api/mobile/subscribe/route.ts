@@ -59,8 +59,6 @@ export async function POST(request: NextRequest) {
     const customerId = await getOrCreateStripeCustomer(userId)
 
     // Create Stripe subscription — stays incomplete until first payment is confirmed.
-    // Expand latest_invoice so we can read the billing period and confirmation_secret
-    // (the v2 replacement for payment_intent.client_secret on Invoice).
     const stripeSub = await stripe.subscriptions.create({
       customer:         customerId,
       items:            [{ price: pkg.stripePriceId }],
@@ -69,13 +67,30 @@ export async function POST(request: NextRequest) {
       metadata:         { userId, packageId },
     })
 
-    const invoice = stripeSub.latest_invoice as Stripe.Invoice
+    const invoiceRaw = stripeSub.latest_invoice as any
+    const invoiceId  = typeof invoiceRaw === 'string' ? invoiceRaw : invoiceRaw?.id
 
-    const clientSecret = invoice.confirmation_secret?.client_secret
+    if (!invoiceId) {
+      return NextResponse.json({ error: 'Failed to retrieve invoice' }, { status: 500 })
+    }
+
+    // In Stripe SDK v20, payment_intent moved to invoice.payments[0].payment.payment_intent.
+    // List the invoice's payments and expand the nested payment_intent to get the client_secret.
+    const invoicePayments = await stripe.invoicePayments.list({
+      invoice: invoiceId,
+      expand: ['data.payment.payment_intent'],
+    } as any)
+
+    const firstPayment  = invoicePayments.data[0]
+    const paymentIntent = firstPayment?.payment?.payment_intent as Stripe.PaymentIntent | undefined
+    const clientSecret  = paymentIntent?.client_secret ?? null
+
     if (!clientSecret) {
+      console.error('[mobile/subscribe] No client_secret found. Payments:', JSON.stringify(invoicePayments.data))
       return NextResponse.json({ error: 'Failed to create payment intent' }, { status: 500 })
     }
 
+    const invoice     = invoiceRaw as Stripe.Invoice
     const periodStart = new Date(invoice.period_start * 1000)
     const periodEnd   = new Date(invoice.period_end   * 1000)
 

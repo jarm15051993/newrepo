@@ -19,6 +19,7 @@
     "@stripe/stripe-js": "^8.7.0",
     "@types/uuid": "^10.0.0",
     "bcryptjs": "^3.0.3",
+    "date-fns": "^4.1.0",
     "next": "16.1.6",
     "next-auth": "^4.24.13",
     "passkit-generator": "^3.5.7",
