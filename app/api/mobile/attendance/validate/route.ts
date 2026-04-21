@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       memberName: `${member.name ?? ''} ${member.lastName ?? ''}`.trim(),
       className: booking.class.title,
+      stretcherNumber: booking.stretcherNumber ?? null,
     })
   } catch (error) {
     console.error('[attendance/validate]', error)
