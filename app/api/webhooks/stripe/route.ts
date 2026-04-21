@@ -86,7 +86,11 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   // (billing hasn't started yet). Guard against that by falling back to +1 month.
   const periodStart   = new Date(invoice.period_start * 1000)
   const rawPeriodEnd  = new Date(invoice.period_end   * 1000)
-  const periodEnd     = rawPeriodEnd <= periodStart
+  // For default_incomplete subscriptions Stripe may return period_end within seconds/minutes
+  // of period_start (billing period not yet established). Treat any period_end within 24h
+  // of period_start as invalid and fall back to +1 month.
+  const periodTooShort = (rawPeriodEnd.getTime() - periodStart.getTime()) < 86_400_000
+  const periodEnd     = periodTooShort
     ? new Date(new Date(periodStart).setMonth(periodStart.getMonth() + 1))
     : rawPeriodEnd
 
